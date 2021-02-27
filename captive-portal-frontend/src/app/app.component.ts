@@ -6,5 +6,5 @@ import { Component } from '@angular/core';
   styleUrls: ['./app.component.css']
 })
 export class AppComponent {
-  title = 'captive-portal-frontend';
+  title = 'GK7 Captive Portal';
 }

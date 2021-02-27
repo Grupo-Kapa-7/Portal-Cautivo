@@ -21,6 +21,7 @@
     "@angular/platform-browser": "~11.2.3",
     "@angular/platform-browser-dynamic": "~11.2.3",
     "@angular/router": "~11.2.3",
+    "ngx-spinner": "^10.0.1",
     "rxjs": "~6.6.0",
     "tslib": "^2.0.0",
     "zone.js": "~0.11.3"
@@ -30,6 +31,8 @@
     "@angular/cli": "~11.2.2",
     "@angular/compiler-cli": "~11.2.3",
     "@types/jasmine": "~3.6.0",
+    "@types/jest": "^26.0.20",
+    "@types/mocha": "^8.2.1",
     "@types/node": "^12.11.1",
     "codelyzer": "^6.0.0",
     "jasmine-core": "~3.6.0",
