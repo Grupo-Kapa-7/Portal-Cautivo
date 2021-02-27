@@ -3,7 +3,8 @@ import { RouterModule, Routes } from '@angular/router';
 import { CaptivePortalComponent } from './captive-portal/captive-portal.component';
 
 const routes: Routes = [
-  {path: 'login', component: CaptivePortalComponent}
+  {path: 'login', component: CaptivePortalComponent},
+  {path: 'login/:name', component: CaptivePortalComponent}
 ];
 
 @NgModule({

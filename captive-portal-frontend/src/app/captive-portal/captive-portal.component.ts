@@ -9,16 +9,21 @@ import { NgxSpinnerService } from 'ngx-spinner';
 })
 export class CaptivePortalComponent implements OnInit {
 
+  captivePortalName = null;
+
   constructor(private route: ActivatedRoute, private spinner: NgxSpinnerService)
   {
     this.spinner.show();
     setTimeout(() => {
       this.spinner.hide();
     }, 10000);
+    this.captivePortalName = route.snapshot.params.name;
+    console.log(route.snapshot.params.name);
   }
 
   ngOnInit(): void 
   {
+
   }
 
 }
