@@ -57,7 +57,7 @@ export class LoginController {
 
   }
 
-  @post('/login')
+  @post('/api/login')
   @response(200, {
     description: 'Hacer login segun el tipo con el usuario y password',
     content: {'application/json': {schema: getModelSchemaRef(Login)}},
@@ -108,7 +108,7 @@ export class LoginController {
       throw new NotFound('Authentication Failed', 401);
   }
 
-  @get('/login/myip')
+  @get('/api/login/myip')
   @response(200, {
     description: 'Encontrar mi ip',
   })

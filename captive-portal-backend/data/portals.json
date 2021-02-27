@@ -1,0 +1,10 @@
+{
+  "ids": {
+    "Portal": 3
+  },
+  "models": {
+    "Portal": {
+      "1": "{\"name\":\"cenosaldap\",\"greeting\":\"CENOSA LDAP\",\"type\":\"ldap\",\"id\":1}"
+    }
+  }
+}

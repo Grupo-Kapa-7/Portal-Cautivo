@@ -41,7 +41,7 @@ export class PingController {
   constructor(@inject(RestBindings.Http.REQUEST) private req: Request) {}
 
   // Map to `GET /ping`
-  @get('/ping')
+  @get('/api/ping')
   @response(200, PING_RESPONSE)
   ping(): object {
     // Reply with a greeting, the current time, the url, and request headers
