@@ -1,68 +1,30 @@
-<div class="parentDiv" fxLayout="column" fxFill fxLayoutAlign="space-evenly-center" #parentDiv>
-    <div class="topDiv" fxLayout="column" #topDiv>
-        <mat-toolbar color="primary">
-            <!-- <button mat-icon-button class="example-icon" aria-label="Example icon-button with menu icon">
-              <mat-icon>menu</mat-icon>
-            </button> -->
-            <img src="assets/logo-blanco.png" style="width: auto; height: 40px">
-            &nbsp;
-            &nbsp;
-            <span>Portal Cautivo</span>
-            <span fxShow fxHide.lt-sm>&nbsp;{{captivePortalTitle}}</span>
-            <span class="example-spacer"></span>
-            <span fxShow fxHide.lt-sm style="font-size:medium;">Mi IP : {{myip}}</span>
-            <button mat-icon-button class="example-icon" aria-label="Example icon-button with share icon">
-              <mat-icon>help_outline</mat-icon>
-            </button>
-            <button fxHide fxShow.lt-sm mat-icon-button aria-label="Mostrar IP" [matMenuTriggerFor]="menu">
-                <mat-icon>info</mat-icon>
-            </button>
-            <mat-menu #menu="matMenu">
-                <button mat-menu-item>Mi IP : {{myip}}</button>
-            </mat-menu>
-          </mat-toolbar>
-          <mat-toolbar fxHide fxShow.lt-sm color="primary">
-            <span class="example-spacer"></span>
-            <span>{{captivePortalTitle}}</span>
-            <span class="example-spacer"></span>
-          </mat-toolbar>
-    </div>
-    <div class="middleDiv" fxLayout="row" fxFill fxFlex="nogrow" fxLayoutGap="10px grid" fxLayoutAlign="space-around stretch" #middleDiv>
-        <!-- <div fxHide.lt-md class="middleLeft"  fxLayout="column" fxFlex="25">
+<div class="middleDiv" fxLayout="row" fxFill fxLayoutGap="10px grid" fxLayoutAlign="space-around stretch" #middleDiv>
+    <!-- <div fxHide.lt-md class="middleLeft"  fxLayout="column" fxFlex="25">
 
-        </div> -->
-        <div class="middleMid" fxLayout="column" fxFlex="80" style="flex-grow: 1">
-            <br><br>
-            <img src="assets/Fortinet_logo.svg.png" style="height: auto; width: 250px; margin: 0 auto;">
-            <br><br>
-            <h2>Ingrese sus credenciales</h2>
-            <form [formGroup]="loginForm">
-                <mat-form-field>
-                    <mat-label>Usuario</mat-label>
-                    <input matInput type="text" formControlName="usernameControl" required>
-                </mat-form-field>
-                <div class="break"></div>
-                <mat-form-field>
-                    <mat-label>Contrase&ntilde;a</mat-label>
-                    <input matInput type="password" formControlName="passwordControl" required>
-                </mat-form-field>
-                <div class="break"></div>
-                <button mat-raised-button color="primary" (click)="login()">Iniciar Sesi&oacute;n</button>
-            </form>
-        </div>
-        <!-- <div fxHide.lt-md class="middleRight" fxLayout="column" fxFlex="25">
+    </div> -->
+    <div class="middleMid" fxLayout="column" fxFlex="80" style="flex-grow: 1">
+        <br><br>
+        <img src="assets/Fortinet_logo.svg.png" style="height: auto; width: 250px; margin: 0 auto;">
+        <br><br>
+        <h2>Ingrese sus credenciales</h2>
+        <form [formGroup]="loginForm">
+            <mat-form-field>
+                <mat-label>Usuario</mat-label>
+                <input matInput type="text" formControlName="usernameControl" required>
+            </mat-form-field>
+            <div class="break"></div>
+            <mat-form-field>
+                <mat-label>Contrase&ntilde;a</mat-label>
+                <input matInput type="password" formControlName="passwordControl" required>
+            </mat-form-field>
+            <div class="break"></div>
+            <button mat-raised-button color="primary" (click)="login()">Iniciar Sesi&oacute;n</button>
+            <div class="break"></div>
+            <br>
+            <h3 *ngIf="loginError" style="color: red;">Error al iniciar sesi&oacute;n</h3>
+        </form>
+    </div>
+    <!-- <div fxHide.lt-md class="middleRight" fxLayout="column" fxFlex="25">
 
-        </div> -->
-    </div>
-    <div class="bottomDiv" fxLayout="row" fxLayoutAlign #bottomDiv>
-        <mat-toolbar color="primary">
-            <!-- <button mat-icon-button class="example-icon" aria-label="Example icon-button with menu icon">
-              <mat-icon>menu</mat-icon>
-            </button> -->
-            <span class="example-spacer"></span>
-            <h2>Desarrollado por Grupo Kapa 7 &copy; {{currentYear}} &nbsp;</h2>
-            <img fxHide.lt-sm src="assets/logo-kapa7.png" style="height: 50px; width: auto;">
-            <span class="example-spacer"></span>
-        </mat-toolbar>
-    </div>
+    </div> -->
 </div>

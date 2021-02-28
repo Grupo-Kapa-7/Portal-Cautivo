@@ -14,11 +14,15 @@ import { CookieService } from 'ngx-cookie-service';
 import { InterceptorHTTP } from './servicios/httpinterceptor';
 import { Globals } from './globals';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { SuccessLoginComponent } from './success-login/success-login.component';
+import { NotFoundComponent } from './not-found/not-found.component';
 
 @NgModule({
   declarations: [
     AppComponent,
-    CaptivePortalComponent
+    CaptivePortalComponent,
+    SuccessLoginComponent,
+    NotFoundComponent
   ],
   imports: [
     BrowserModule,

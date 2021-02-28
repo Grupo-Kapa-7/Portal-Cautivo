@@ -1,5 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { Router, ActivatedRoute, ParamMap } from '@angular/router';
 import { NgxSpinnerService } from 'ngx-spinner';
 import { Servicios } from '../servicios/servicios';
@@ -15,13 +16,14 @@ export class CaptivePortalComponent implements OnInit {
   captivePortalTitle = "";
   myip = 'Obteniendo...';
   loginType = "";
-  currentYear = new Date().getFullYear();
   loginForm = new FormGroup({
     usernameControl : new FormControl('', [Validators.required]),
     passwordControl : new FormControl('', [Validators.required])
   })
 
-  constructor(private route: ActivatedRoute, private formBuilder: FormBuilder, private router: Router, private spinner: NgxSpinnerService, private servicios: Servicios)
+  loginError = false;
+
+  constructor(private snackBar: MatSnackBar, private route: ActivatedRoute, private formBuilder: FormBuilder, private router: Router, private spinner: NgxSpinnerService, private servicios: Servicios)
   {
 
   }
@@ -30,15 +32,26 @@ export class CaptivePortalComponent implements OnInit {
   {
     if(this.loginForm.valid)
     {
+      this.loginError = false;
+
       this.spinner.show();
       console.log("Performing login type:" + this.loginType + " to user : " + this.loginForm.controls.usernameControl.value)
     
       this.servicios.doLogin(this.loginForm.controls.usernameControl.value, this.loginForm.controls.passwordControl.value, this.loginType).subscribe((data:any)=> {
-        console.log(data);
-        this.spinner.hide();
+        if(data)
+        {
+          console.log(data);
+          this.spinner.hide();
+        }
       },
       (error) => {
         console.log(error);
+        this.spinner.hide();
+        if(error.status == 401)
+        {
+          this.loginError = true;
+          this.snackBar.open(error.statusText + " - Credenciales erroneas", 'OK', {duration: 3000, horizontalPosition: 'center', verticalPosition: 'bottom'});
+        }
       });
     
     }
@@ -56,16 +69,6 @@ export class CaptivePortalComponent implements OnInit {
     console.log(this.route.snapshot.params.name);
   
     this.spinner.show();
-    this.servicios.getMyMip().subscribe((myip: any) => {
-      if(myip)
-      {
-        this.myip = myip.srcip;
-      }
-    },
-    (error) => {
-      console.log(error);
-    });
-
     this.servicios.getPortalData(this.captivePortalName).subscribe((data: any) => {
       if(data.length > 0 && data != null && data != undefined)
       {
