@@ -4,15 +4,75 @@ const os = require('os')
 
 export * from './application';
 
+// var users = {user1: 'secret_password'}
+// var tephra = require('tephra')
+// var server = new tephra(
+//   'secret',
+//   1812, // authentication port
+//   1813, // accounting port
+//   3799, // change of authorisation port
+//   [ // define any vendor dictionaries for vendor-specific attributes
+
+//   ]
+// )
+
 export async function main(options: ApplicationConfig = {}) {
   const app = new CaptivePortalBackendApplication(options);
   await app.boot();
+  await app.migrateSchema();
   await app.start();
   app.bind(RestBindings.ERROR_WRITER_OPTIONS).to({debug: true});
 
   const url = app.restServer.url;
   console.log(`Server is running at ${url}`);
   console.log(`Try ${url}/ping`);
+
+  // server.on('Access-Request', function(packet:any, rinfo:any, accept:any, reject:any) 
+  // {
+  //   try
+  //   {
+  //     console.log(packet.attributes);
+  //     var username  = packet.attributes['User-Name'],
+  //         password = packet.attributes['User-Password']
+  //     if (username in users && users[username] === password) {
+  //       return accept(
+  //         [
+  //           // ['put', 'your'],
+  //           // ['response', 'attribute'],
+  //           // ['pairs', 'here']
+  //         ],
+  //         { /* and vendor attributes here */
+  //           // some_vendor: [
+  //           //   ['foo', 'bar']
+  //           // ]
+  //         },
+  //         console.log
+  //       )
+  //     }
+  //     reject([], {}, console.log)
+  //   }
+  //   catch(err)
+  //   {
+  //     console.log(err);
+  //   }
+  // }).on('Accounting-Request', function(packet:any, rinfo:any, respond:any) 
+  // {
+  //   // catch all accounting-requests
+  //   respond([], {}, console.log)
+  // }).on('Accounting-Request-Start', function(packet:any, rinfo:any, respond:any) 
+  // {
+  //   // or just catch specific accounting-request status types...
+  //   respond([], {}, console.log)
+  // }).on('Accounting-Request-Interim-Update', function(packet:any, rinfo:any, respond:any) 
+  // {
+  //   respond([], {}, console.log)
+  // }).on('Accounting-Request-Stop', function(packet:any, rinfo:any, respond:any) 
+  // {
+  //   respond([], {}, console.log)
+  // })
+
+  // server.bind()
+  console.log("Radius Server On");
 
   return app;
 }

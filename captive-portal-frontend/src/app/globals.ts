@@ -10,7 +10,7 @@ export class Globals {
   constructor()
   {
     if(!environment.production)
-      this.API_HOST = window.location.protocol + "//" + window.location.hostname + ":8888";
+      this.API_HOST = window.location.protocol + "//" + window.location.hostname + ":3000";
     else
        this.API_HOST = window.location.protocol + "//" + window.location.hostname;
     
@@ -19,7 +19,7 @@ export class Globals {
   ngOnInit()
   {
     if(!environment.production)
-      this.API_HOST = window.location.protocol + "//" + window.location.hostname + ":8888";
+      this.API_HOST = window.location.protocol + "//" + window.location.hostname + ":3000";
     else
        this.API_HOST = window.location.protocol + "//" + window.location.hostname;
     

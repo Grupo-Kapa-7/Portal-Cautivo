@@ -17,7 +17,12 @@ export class Servicios {
 
     getPortalData(portalName: string)
     {
-        return this.http.get(this.globals.API_HOST + "/api/portals?filter=[where][name]="+portalName);
+        return this.http.get(this.globals.API_HOST + "/api/portals?filter[where][name]="+portalName);
+    }
+
+    getDefaultPortalData()
+    {
+        return this.http.get(this.globals.API_HOST + "/api/portals?filter[where][default]=true");
     }
 
     doLogin(username: string, password: string, type: string)

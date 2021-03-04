@@ -27,6 +27,12 @@ export class Portal extends Entity {
   })
   type: string;
 
+  @property({
+    type: 'boolean',
+    required: true,
+  })
+  default: boolean;
+
 
   constructor(data?: Partial<Portal>) {
     super(data);

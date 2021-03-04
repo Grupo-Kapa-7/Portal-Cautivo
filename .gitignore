@@ -18,7 +18,12 @@ dist/
 
 # Package files
 *.jar
-
+*.exe
+captive-portal-backend-linux
+*zip
+portalconfig.json
+data
+data/*
 # Maven
 target/
 dist/

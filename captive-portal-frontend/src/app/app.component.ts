@@ -1,4 +1,5 @@
 import { Component, OnInit } from '@angular/core';
+import { Title } from '@angular/platform-browser';
 import { ActivatedRoute, ActivationStart, Router, RoutesRecognized } from '@angular/router';
 import { NgxSpinnerService } from 'ngx-spinner';
 import { NotFoundComponent } from './not-found/not-found.component';
@@ -16,38 +17,52 @@ export class AppComponent implements OnInit {
   captivePortalName = '';
   captivePortalTitle = "";
   myip = 'Obteniendo...';
+  productName = "Portal Cautivo";
 
-  constructor(private servicios: Servicios, private router: Router, private activatedRoute: ActivatedRoute, private spinner: NgxSpinnerService)
+  constructor(private servicios: Servicios, private router: Router, private activatedRoute: ActivatedRoute, private spinner: NgxSpinnerService, private titleService: Title)
   {
+    titleService.setTitle('Portal Cautivo');
     router.events.subscribe(event => {
+      
       if(event instanceof RoutesRecognized)
       {
-        console.log(event);
-
         if(event.url.startsWith('/login/'))
         {
+          this.productName = "Portal Cautivo";
           this.captivePortalName = event.url.split('/login/')[1];
           if(this.captivePortalName != "")
           {
-            this.servicios.getPortalData(this.captivePortalName).subscribe((data: any) => {
-              if(data.length > 0 && data != null && data != undefined)
-              {
-                this.captivePortalTitle = data[0].greeting;
-              }
-            },
-            (error) => {
-              console.log(error);
-            });
+            if(this.captivePortalName != "default")
+              this.servicios.getPortalData(this.captivePortalName).subscribe((data: any) => {
+                if(data.length > 0 && data != null && data != undefined)
+                {
+                  this.captivePortalTitle = data[0].greeting;
+                }
+              },
+              (error) => {
+                console.log(error);
+              });
+            else
+              this.servicios.getDefaultPortalData().subscribe((data: any) => {
+                if(data.length > 0 && data != null && data != undefined)
+                {
+                  this.captivePortalTitle = data[0].greeting;
+                }
+              },
+              (error) => {
+                console.log(error);
+              });
           }
         }
       }
       else if(event instanceof ActivationStart)
       {
-        console.log(event);
-        if(event.snapshot.component instanceof NotFoundComponent)
+        if(event.snapshot.routeConfig?.component?.name === "NotFoundComponent")
         {
+          console.log("Pagina no encontrada");
           this.captivePortalName = "";
-          this.captivePortalTitle = "";
+          this.productName = "";
+          this.captivePortalTitle = "Página no encontrada";
         }
       }
     });

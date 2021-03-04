@@ -1,6 +1,6 @@
 import {inject} from '@loopback/core';
 import {DefaultCrudRepository} from '@loopback/repository';
-import {PortalDatasourceDataSource} from '../datasources';
+import {MysqlDataSource} from '../datasources';
 import {Portal, PortalRelations} from '../models';
 
 export class PortalRepository extends DefaultCrudRepository<
@@ -9,7 +9,7 @@ export class PortalRepository extends DefaultCrudRepository<
   PortalRelations
 > {
   constructor(
-    @inject('datasources.PortalDatasource') dataSource: PortalDatasourceDataSource,
+    @inject('datasources.mysql') dataSource: MysqlDataSource,
   ) {
     super(Portal, dataSource);
   }

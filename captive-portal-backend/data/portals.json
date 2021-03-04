@@ -1,10 +1,11 @@
 {
   "ids": {
-    "Portal": 3
+    "Portal": 5
   },
   "models": {
     "Portal": {
-      "1": "{\"name\":\"cenosaldap\",\"greeting\":\"CENOSA LDAP\",\"type\":\"ldap\",\"id\":1}"
+      "3": "{\"name\":\"cenosaldap\",\"greeting\":\"CENOSA LDAP\",\"type\":\"ldap\",\"default\":true,\"id\":3}",
+      "4": "{\"name\":\"cenosaguest\",\"greeting\":\"CENOSA GUEST\",\"type\":\"guest\",\"default\":false,\"id\":4}"
     }
   }
 }

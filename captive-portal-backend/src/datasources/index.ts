@@ -1,2 +1,1 @@
-export * from './ldapds.datasource';
-export * from './portal-datasource.datasource';
+export * from './mysql.datasource';

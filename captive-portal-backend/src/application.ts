@@ -8,7 +8,17 @@ import {RepositoryMixin} from '@loopback/repository';
 import {RestApplication} from '@loopback/rest';
 import {ServiceMixin} from '@loopback/service-proxy';
 import path from 'path';
+import {AuthenticationComponent} from '@loopback/authentication';
+import {
+  JWTAuthenticationComponent,
+  SECURITY_SCHEME_SPEC,
+  UserRepository,
+  UserServiceBindings,
+} from '@loopback/authentication-jwt';
 import {MySequence} from './sequence';
+import { MysqlDataSource } from './datasources';
+import { AppUserService } from './services/user.service';
+import { UserCredentialsRepository } from './repositories';
 
 export {ApplicationConfig};
 
@@ -40,5 +50,22 @@ export class CaptivePortalBackendApplication extends BootMixin(
         nested: true,
       },
     };
+
+    // Mount authentication system
+    this.component(AuthenticationComponent);
+    // Mount jwt component
+    this.component(JWTAuthenticationComponent);
+    // Bind datasource
+    this.dataSource(MysqlDataSource, UserServiceBindings.DATASOURCE_NAME);
+    // Bind user service
+    this.bind(UserServiceBindings.USER_SERVICE).toClass(AppUserService),
+    // Bind user and credentials repository
+    this.bind(UserServiceBindings.USER_REPOSITORY).toClass(
+      UserRepository,
+    ),
+    this.bind(UserServiceBindings.USER_CREDENTIALS_REPOSITORY).toClass(
+      UserCredentialsRepository,
+    )
+
   }
 }
