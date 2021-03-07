@@ -30,6 +30,7 @@ export class AppComponent implements OnInit {
         {
           this.productName = "Portal Cautivo";
           this.captivePortalName = event.url.split('/login/')[1];
+          this.captivePortalName = this.captivePortalName.split('?')[0];
           if(this.captivePortalName != "")
           {
             if(this.captivePortalName != "default")

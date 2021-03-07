@@ -6,7 +6,7 @@ import { CustomMaterialModule } from './material.module';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
-import { CaptivePortalComponent } from './captive-portal/captive-portal.component';
+import { CaptivePortalComponent, CaptivePortalTermsModal } from './captive-portal/captive-portal.component';
 import { NgxSpinnerModule } from "ngx-spinner";
 import { Servicios } from './servicios/servicios';
 import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
@@ -22,6 +22,7 @@ import { NotFoundComponent } from './not-found/not-found.component';
     AppComponent,
     CaptivePortalComponent,
     SuccessLoginComponent,
+    CaptivePortalTermsModal,
     NotFoundComponent
   ],
   imports: [

@@ -1,4 +1,5 @@
-import {Entity, model, property} from '@loopback/repository';
+import {Entity, model, property, hasOne} from '@loopback/repository';
+import {PortalTerms} from './portal-terms.model';
 
 @model()
 export class Portal extends Entity {
@@ -33,6 +34,13 @@ export class Portal extends Entity {
   })
   default: boolean;
 
+  @hasOne(() => PortalTerms)
+  portalTerms: PortalTerms;
+
+  @property({
+    type: 'number',
+  })
+  portalTermsId?: number;
 
   constructor(data?: Partial<Portal>) {
     super(data);

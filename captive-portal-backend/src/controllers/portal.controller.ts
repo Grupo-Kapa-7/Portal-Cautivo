@@ -1,3 +1,4 @@
+import { authenticate } from '@loopback/authentication';
 import {
   Count,
   CountSchema,
@@ -26,6 +27,7 @@ export class PortalController {
     public portalRepository : PortalRepository,
   ) {}
 
+  @authenticate('jwt')
   @post('/api/portals')
   @response(200, {
     description: 'Portal model instance',
@@ -47,6 +49,7 @@ export class PortalController {
     return this.portalRepository.create(portal);
   }
 
+  @authenticate('jwt')
   @get('/api/portals/count')
   @response(200, {
     description: 'Portal model count',
@@ -111,6 +114,7 @@ export class PortalController {
     return this.portalRepository.findById(id, filter);
   }
 
+  @authenticate('jwt')
   @patch('/api/portals/{id}')
   @response(204, {
     description: 'Portal PATCH success',
@@ -129,6 +133,7 @@ export class PortalController {
     await this.portalRepository.updateById(id, portal);
   }
 
+  @authenticate('jwt')
   @put('/api/portals/{id}')
   @response(204, {
     description: 'Portal PUT success',
@@ -140,6 +145,7 @@ export class PortalController {
     await this.portalRepository.replaceById(id, portal);
   }
 
+  @authenticate('jwt')
   @del('/api/portals/{id}')
   @response(204, {
     description: 'Portal DELETE success',

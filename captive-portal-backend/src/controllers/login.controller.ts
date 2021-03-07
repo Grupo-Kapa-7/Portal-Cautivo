@@ -202,104 +202,104 @@ export class LoginController {
       return {"srcip": this.request.ip}
   }
 
-  @get('/login/count')
-  @response(200, {
-    description: 'Login model count',
-    content: {'application/json': {schema: CountSchema}},
-  })
-  async count(
-    @param.where(Login) where?: Where<Login>,
-  ): Promise<Count> {
-    return this.loginRepository.count(where);
-  }
+  // @get('/login/count')
+  // @response(200, {
+  //   description: 'Login model count',
+  //   content: {'application/json': {schema: CountSchema}},
+  // })
+  // async count(
+  //   @param.where(Login) where?: Where<Login>,
+  // ): Promise<Count> {
+  //   return this.loginRepository.count(where);
+  // }
 
-  @get('/login')
-  @response(200, {
-    description: 'Array of Login model instances',
-    content: {
-      'application/json': {
-        schema: {
-          type: 'array',
-          items: getModelSchemaRef(Login, {includeRelations: true}),
-        },
-      },
-    },
-  })
-  async find(
-    @param.filter(Login) filter?: Filter<Login>,
-  ): Promise<Login[]> {
-    return this.loginRepository.find(filter);
-  }
+  // @get('/login')
+  // @response(200, {
+  //   description: 'Array of Login model instances',
+  //   content: {
+  //     'application/json': {
+  //       schema: {
+  //         type: 'array',
+  //         items: getModelSchemaRef(Login, {includeRelations: true}),
+  //       },
+  //     },
+  //   },
+  // })
+  // async find(
+  //   @param.filter(Login) filter?: Filter<Login>,
+  // ): Promise<Login[]> {
+  //   return this.loginRepository.find(filter);
+  // }
 
-  @patch('/login')
-  @response(200, {
-    description: 'Login PATCH success count',
-    content: {'application/json': {schema: CountSchema}},
-  })
-  async updateAll(
-    @requestBody({
-      content: {
-        'application/json': {
-          schema: getModelSchemaRef(Login, {partial: true}),
-        },
-      },
-    })
-    login: Login,
-    @param.where(Login) where?: Where<Login>,
-  ): Promise<Count> {
-    return this.loginRepository.updateAll(login, where);
-  }
+  // @patch('/login')
+  // @response(200, {
+  //   description: 'Login PATCH success count',
+  //   content: {'application/json': {schema: CountSchema}},
+  // })
+  // async updateAll(
+  //   @requestBody({
+  //     content: {
+  //       'application/json': {
+  //         schema: getModelSchemaRef(Login, {partial: true}),
+  //       },
+  //     },
+  //   })
+  //   login: Login,
+  //   @param.where(Login) where?: Where<Login>,
+  // ): Promise<Count> {
+  //   return this.loginRepository.updateAll(login, where);
+  // }
 
-  @get('/login/{id}')
-  @response(200, {
-    description: 'Login model instance',
-    content: {
-      'application/json': {
-        schema: getModelSchemaRef(Login, {includeRelations: true}),
-      },
-    },
-  })
-  async findById(
-    @param.path.string('id') id: string,
-    @param.filter(Login, {exclude: 'where'}) filter?: FilterExcludingWhere<Login>
-  ): Promise<Login> {
-    return this.loginRepository.findById(id, filter);
-  }
+  // @get('/login/{id}')
+  // @response(200, {
+  //   description: 'Login model instance',
+  //   content: {
+  //     'application/json': {
+  //       schema: getModelSchemaRef(Login, {includeRelations: true}),
+  //     },
+  //   },
+  // })
+  // async findById(
+  //   @param.path.string('id') id: string,
+  //   @param.filter(Login, {exclude: 'where'}) filter?: FilterExcludingWhere<Login>
+  // ): Promise<Login> {
+  //   return this.loginRepository.findById(id, filter);
+  // }
 
-  @patch('/login/{id}')
-  @response(204, {
-    description: 'Login PATCH success',
-  })
-  async updateById(
-    @param.path.string('id') id: string,
-    @requestBody({
-      content: {
-        'application/json': {
-          schema: getModelSchemaRef(Login, {partial: true}),
-        },
-      },
-    })
-    login: Login,
-  ): Promise<void> {
-    await this.loginRepository.updateById(id, login);
-  }
+  // @patch('/login/{id}')
+  // @response(204, {
+  //   description: 'Login PATCH success',
+  // })
+  // async updateById(
+  //   @param.path.string('id') id: string,
+  //   @requestBody({
+  //     content: {
+  //       'application/json': {
+  //         schema: getModelSchemaRef(Login, {partial: true}),
+  //       },
+  //     },
+  //   })
+  //   login: Login,
+  // ): Promise<void> {
+  //   await this.loginRepository.updateById(id, login);
+  // }
 
-  @put('/login/{id}')
-  @response(204, {
-    description: 'Login PUT success',
-  })
-  async replaceById(
-    @param.path.string('id') id: string,
-    @requestBody() login: Login,
-  ): Promise<void> {
-    await this.loginRepository.replaceById(id, login);
-  }
+  // @put('/login/{id}')
+  // @response(204, {
+  //   description: 'Login PUT success',
+  // })
+  // async replaceById(
+  //   @param.path.string('id') id: string,
+  //   @requestBody() login: Login,
+  // ): Promise<void> {
+  //   await this.loginRepository.replaceById(id, login);
+  // }
 
-  @del('/login/{id}')
-  @response(204, {
-    description: 'Login DELETE success',
-  })
-  async deleteById(@param.path.string('id') id: string): Promise<void> {
-    await this.loginRepository.deleteById(id);
-  }
+  // @del('/login/{id}')
+  // @response(204, {
+  //   description: 'Login DELETE success',
+  // })
+  // async deleteById(@param.path.string('id') id: string): Promise<void> {
+  //   await this.loginRepository.deleteById(id);
+  // }
 }

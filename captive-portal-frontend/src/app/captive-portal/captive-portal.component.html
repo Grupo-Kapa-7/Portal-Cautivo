@@ -6,8 +6,8 @@
         <br><br>
         <img src="assets/Fortinet_logo.svg.png" style="height: auto; width: 250px; margin: 0 auto;">
         <br><br>
-        <h2>Ingrese sus credenciales</h2>
-        <form [formGroup]="loginForm">
+        <h2 *ngIf="ldap">Ingrese sus credenciales</h2>
+        <form [formGroup]="loginForm" *ngIf="ldap">
             <mat-form-field>
                 <mat-label>Usuario</mat-label>
                 <input matInput type="text" formControlName="usernameControl" required>
@@ -22,6 +22,58 @@
             <div class="break"></div>
             <br>
             <h3 *ngIf="loginError" style="color: red;">Error al iniciar sesi&oacute;n</h3>
+        </form>
+        <h2 *ngIf="walledGarden && !registered">Ingrese sus datos</h2>
+        <form [formGroup]="registrationForm" *ngIf="walledGarden && !registered">
+            <mat-form-field>
+                <mat-label>Nombre(s)</mat-label>
+                <input matInput type="text" formControlName="firstNameControl" required>
+            </mat-form-field>
+            <div class="break"></div>
+            <mat-form-field>
+                <mat-label>Appellido(s)</mat-label>
+                <input matInput type="text" formControlName="lastNameControl" required>
+            </mat-form-field>
+            <div class="break"></div>
+            <mat-form-field>
+                <mat-label>Correo Electr&oacute;nico(s)</mat-label>
+                <input matInput type="email" formControlName="emailControl" required>
+            </mat-form-field>
+            <div class="break"></div>
+            <mat-form-field>
+                <mat-label>Tel&eacute;fono</mat-label>
+                <input matInput type="tel" formControlName="phoneNumberControl" required>
+            </mat-form-field>
+            <div class="break"></div>
+            <mat-checkbox type="checkbox" formControlName="acceptTerms" id="acceptTerms" required>Aceptar terminos y condiciones </mat-checkbox>   
+            <button mat-icon-button color="accent" aria-label="Ver terminos y condiciones" (click)="viewTerms()">
+                <span class="material-icons">open_in_new</span>
+            </button>
+            <br>
+            <div class="break"></div>
+            <br>
+            <input type="hidden" formControlName="macHiddenControl" required>
+            <input type="hidden" formControlName="magicHiddenControl" required>
+            <button mat-raised-button color="primary" (click)="registerAndLogin()">Registrarse</button>
+            <div class="break"></div>
+            <br>
+            <h3 *ngIf="loginError" style="color: red;">Error al crear sesi&oacute;n</h3>
+        </form>
+        <h1 *ngIf="walledGarden && registered">Bienvenido {{registeredUser.guestUser.firstName}} {{registeredUser.guestUser.lastName}}</h1>
+        <br *ngIf="walledGarden && registered">
+        <h3 *ngIf="walledGarden && registered">Acepte los terminos y condiciones para continuar</h3>
+        <form [formGroup]="loginThroughForm" *ngIf="walledGarden && registered">
+            <mat-checkbox type="checkbox" formControlName="acceptTerms" id="acceptTerms" required>Aceptar terminos y condiciones</mat-checkbox>   
+            <button mat-icon-button color="accent" aria-label="Ver terminos y condiciones" (click)="viewTerms()">
+                <span class="material-icons">open_in_new</span>
+            </button>
+            <br>
+            <div class="break"></div>
+            <br>
+            <input type="hidden" formControlName="macHiddenControl" required>
+            <input type="hidden" formControlName="magicHiddenControl" required>
+            <button mat-raised-button color="primary" (click)="loginThrough()">Continuar</button>
+            <h3 *ngIf="loginError" style="color: red;">Debe aceptar los terminos y condiciones</h3>
         </form>
     </div>
     <!-- <div fxHide.lt-md class="middleRight" fxLayout="column" fxFlex="25">
