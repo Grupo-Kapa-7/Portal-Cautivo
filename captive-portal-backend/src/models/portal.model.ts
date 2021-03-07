@@ -1,7 +1,18 @@
 import {Entity, model, property, hasOne} from '@loopback/repository';
 import {PortalTerms} from './portal-terms.model';
 
-@model()
+@model({
+  name: "Portal",
+  settings: {idInjection: false, mysql: {schema: 'captiveportal', table: 'Portal'}, foreignKeys: {
+    fkGuestUserId: {
+      name: 'fkPortalTermsId',
+      entity: 'PortalTerms',
+      entityKey: 'id',
+      foreignKey: 'portalTermsId',
+      onDelete: 'cascade',
+      onUpdate: 'cascade'
+    }
+}}})
 export class Portal extends Entity {
   @property({
     type: 'number',

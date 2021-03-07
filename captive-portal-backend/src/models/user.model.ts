@@ -2,6 +2,7 @@ import {Entity, model, property, hasOne} from '@loopback/repository';
 import {UserCredentials} from './user-credentials.model';
 
 @model({
+  name: "User"
   // settings: {
   //   idInjection: false,
   //   mysql: {schema: 'captiveportal', table: 'User'}

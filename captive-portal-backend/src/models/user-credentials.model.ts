@@ -5,7 +5,9 @@
 
 import {Entity, model, property} from '@loopback/repository';
 
-@model()
+@model({
+  name: "UserCredentials"
+})
 export class UserCredentials extends Entity {
   @property({
     type: 'string',

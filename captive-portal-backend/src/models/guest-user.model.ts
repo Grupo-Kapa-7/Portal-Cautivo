@@ -3,6 +3,7 @@ import { hasMagic } from 'glob';
 import { GuestMacAddress } from './guest-mac-address.model';
 
 @model({
+  name: "GuestUser",
   settings: {idInjection: false, mysql: {schema: 'captiveportal', table: 'GuestUser'}}
 })
 export class GuestUser extends Entity {
@@ -12,7 +13,9 @@ export class GuestUser extends Entity {
     precision: 10,
     scale: 0,
     id: 1,
-    mysql: {columnName: 'id', dataType: 'int', dataLength: null, dataPrecision: 10, dataScale: 0, nullable: 'N'},
+    length: 10,
+    unsigned: true,
+    mysql: {columnName: 'id', dataType: 'int', dataLength: null, unsigned: true, dataPrecision: 10, dataScale: 0, nullable: 'N'},
   })
   id: number;
 
@@ -36,6 +39,9 @@ export class GuestUser extends Entity {
     type: 'string',
     required: true,
     length: 50,
+    index: {
+      unique: true,
+    },
     mysql: {columnName: 'email', dataType: 'varchar', dataLength: 50, dataPrecision: null, dataScale: null, nullable: 'N'},
   })
   email: string;

@@ -1,7 +1,7 @@
 import {Entity, model, property, hasOne} from '@loopback/repository';
 import {Portal} from './portal.model';
 
-@model()
+@model({name: "PortalTerms"})
 export class PortalTerms extends Entity {
   @property({
     type: 'number',
