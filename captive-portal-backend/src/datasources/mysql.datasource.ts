@@ -1,16 +1,7 @@
 import {inject, lifeCycleObserver, LifeCycleObserver} from '@loopback/core';
 import {juggler} from '@loopback/repository';
+const fs = require('fs');
 
-const config = {
-  name: 'mysql',
-  connector: 'mysql',
-  url: 'mysql://jorge:Mejate12@10.57.237.250/captiveportal',
-  host: '10.57.237.250',
-  port: 3306,
-  user: 'jorge',
-  password: 'MEjate12',
-  database: 'captiveportal'
-};
 
 // Observe application's life cycle to disconnect the datasource when
 // application is stopped. This allows the application to be shut down
@@ -20,12 +11,19 @@ const config = {
 export class MysqlDataSource extends juggler.DataSource
   implements LifeCycleObserver {
   static dataSourceName = 'mysql';
-  static readonly defaultConfig = config;
+  static readonly portalConfig = JSON.parse(fs.readFileSync('portalconfig.json', {encoding: 'utf8'}));
 
   constructor(
     @inject('datasources.config.mysql', {optional: true})
-    dsConfig: object = config,
+    dsConfig: object = MysqlDataSource.portalConfig.databaseOptions,
   ) {
-    super(dsConfig);
+    try
+    {
+      super(dsConfig);
+    }
+    catch(e)
+    {
+      console.log(e);
+    }
   }
 }

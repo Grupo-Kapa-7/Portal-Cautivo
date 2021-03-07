@@ -1,4 +1,5 @@
 import { inject } from '@loopback/core';
+import { LoggingBindings, logInvocation } from '@loopback/logging';
 import {
   Count,
   CountSchema,
@@ -20,6 +21,7 @@ import {
   RestBindings,
 } from '@loopback/rest';
 import e from 'express';
+import { Logger } from 'winston';
 import {Login} from '../models';
 import {LoginRepository} from '../repositories';
 
@@ -45,6 +47,8 @@ export async function asyncForEach<T>(array: Array<T>, callback: (item: T, index
 export class LoginController {
 
   private authOptions : any;
+  @inject(LoggingBindings.WINSTON_LOGGER)
+  private logger: Logger;
 
   constructor(
     @repository(LoginRepository)
@@ -59,12 +63,13 @@ export class LoginController {
     }
     catch(error)
     {
-      console.log(error);
+      this.logger.log('error',error);
     }
 
   }
 
   @post('/api/login')
+  @logInvocation()
   @response(200, {
     description: 'Hacer login segun el tipo con el usuario y password',
     content: {'application/json': {schema: getModelSchemaRef(Login)}},
@@ -93,7 +98,7 @@ export class LoginController {
     else
       srcip = this.request.ip;
 
-    console.log("Peticion de login de " + srcip + " para el usuario: " + login.username + " de tipo: " + login.type);
+    this.logger.log('info',"Peticion de login de " + srcip + " para el usuario: " + login.username + " de tipo: " + login.type);
 
     try
     {
@@ -106,15 +111,15 @@ export class LoginController {
         user = await authenticate(tempOptions)
         if(user)
         {
-          console.log("Usuario : " + login.username + " autenticado exitosamente en LDAP ");
+          this.logger.log('info',"Usuario : " + login.username + " autenticado exitosamente en LDAP ");
           authMethodsApproved = true;
         }
       }
     }
     catch(error)
     {
-      console.log("Error al autenticar usuario " + login.username);
-      console.log(error);
+      this.logger.log('error',`Error al autenticar usuario ${login.username}`);
+      this.logger.log('error',error);
       authErrors+=error;
       authErrors+="\n";
     }
@@ -175,7 +180,7 @@ export class LoginController {
           console.log(err);
         }
       });
-      console.log("Termino el ciclo de logins por cada fortigate configurado");
+      this.logger.log('info',"Termino el ciclo de logins por cada fortigate configurado");
     
       if(authenticated)
         return {"message" : "success", "username": login.username, "extra" : user, "srcip": srcip};
@@ -184,7 +189,7 @@ export class LoginController {
     }
     else
     {
-      console.log("Error al autenticar el usuario : " + login.username);
+      this.logger.log('error',"Error al autenticar el usuario : " + login.username);
       throw new NotFound('Authentication Failed', 401);
     }
   }

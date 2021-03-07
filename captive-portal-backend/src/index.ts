@@ -1,4 +1,6 @@
+import { LoggingBindings } from '@loopback/logging';
 import { RestBindings } from '@loopback/rest';
+import { format, LoggerOptions } from 'winston';
 import {ApplicationConfig, CaptivePortalBackendApplication} from './application';
 const os = require('os')
 
@@ -22,7 +24,6 @@ export async function main(options: ApplicationConfig = {}) {
   await app.migrateSchema();
   await app.start();
   app.bind(RestBindings.ERROR_WRITER_OPTIONS).to({debug: true});
-
   const url = app.restServer.url;
   console.log(`Server is running at ${url}`);
   console.log(`Try ${url}/ping`);

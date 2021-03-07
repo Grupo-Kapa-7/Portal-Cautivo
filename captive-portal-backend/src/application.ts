@@ -1,5 +1,5 @@
 import {BootMixin} from '@loopback/boot';
-import {ApplicationConfig} from '@loopback/core';
+import {ApplicationConfig, extensionFor} from '@loopback/core';
 import {
   RestExplorerBindings,
   RestExplorerComponent,
@@ -19,6 +19,9 @@ import {MySequence} from './sequence';
 import { MysqlDataSource } from './datasources';
 import { AppUserService } from './services/user.service';
 import { UserCredentialsRepository } from './repositories';
+import {LoggingBindings, LoggingComponent, WinstonTransports, WINSTON_TRANSPORT} from '@loopback/logging';
+import { format, LoggerOptions } from 'winston';
+import { extension } from 'mime';
 
 export {ApplicationConfig};
 
@@ -39,6 +42,31 @@ export class CaptivePortalBackendApplication extends BootMixin(
       path: '/explorer',
     });
     this.component(RestExplorerComponent);
+
+    //Logging
+    this.configure(LoggingBindings.COMPONENT).to({
+      enableFluent: false, // default to true
+      enableHttpAccessLog: true, // default to true
+    });
+    this.configure<LoggerOptions>(LoggingBindings.WINSTON_LOGGER).to({
+      level: 'info',
+      format: format.json(),
+      defaultMeta: {framework: 'LoopBack'},
+    });
+    const consoleTransport = new WinstonTransports.Console({
+      level: 'info',
+      format: format.combine(format.colorize(), format.simple())
+    });
+    const fileTransport = new WinstonTransports.File({
+      filename: "backend.log",
+      maxsize: 10485760,
+      maxFiles: 5,
+      tailable: true,
+      zippedArchive: true,
+    })
+    this.bind('loggin.winston.transports.console').to(consoleTransport).apply(extensionFor(WINSTON_TRANSPORT));
+    this.bind('loggin.winston.transports.file').to(fileTransport).apply(extensionFor(WINSTON_TRANSPORT));
+    this.component(LoggingComponent);
 
     this.projectRoot = __dirname;
     // Customize @loopback/boot Booter Conventions here
