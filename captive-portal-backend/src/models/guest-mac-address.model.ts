@@ -28,7 +28,7 @@ export class GuestMacAddress extends Entity {
   })
   macAddress: string;
 
-  @belongsTo(() => GuestUser, {name: 'guestUser'}, {required: true, type: 'number', length: 10, unsigned: true})
+  @belongsTo(() => GuestUser, {name: 'guestUser'}, {required: true, type: 'number', length: 10})
   guestUserId: number;
   // Define well-known properties here
 

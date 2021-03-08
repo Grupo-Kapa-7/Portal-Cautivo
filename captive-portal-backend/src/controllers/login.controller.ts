@@ -23,8 +23,13 @@ import {
 import { Console } from 'console';
 import e from 'express';
 import { createLogger, format, Logger } from 'winston';
+import winston from 'winston/lib/winston/config';
+import winstonModule from 'winston';
 import {Login} from '../models';
 import {LoginRepository} from '../repositories';
+import DailyRotateFile = require("winston-daily-rotate-file");
+import { SyslogTransportOptions, Syslog } from 'winston-syslog';
+
 
 const fs = require('fs');
 const { authenticate } = require('ldap-authentication');
@@ -47,20 +52,20 @@ export async function asyncForEach<T>(array: Array<T>, callback: (item: T, index
 
 export class LoginController {
 
-  private authOptions : any;
-  @inject(LoggingBindings.WINSTON_LOGGER)
-  private logger: Logger;
+  private portalConfig : any;
 
   constructor(
     @repository(LoginRepository)
     public loginRepository : LoginRepository,
+    @inject(LoggingBindings.WINSTON_LOGGER)
+    private logger: Logger,
     @inject(RestBindings.Http.REQUEST) private request: any
   ) 
   {
 
     try
     {
-      this.authOptions = JSON.parse(fs.readFileSync('portalconfig.json', {encoding: 'utf8'}));
+      this.portalConfig = JSON.parse(fs.readFileSync('portalconfig.json', {encoding: 'utf8'}));
     }
     catch(error)
     {
@@ -105,7 +110,7 @@ export class LoginController {
     {
       if(login.type == 'ldap')
       {
-        let tempOptions = this.authOptions.ldapOptions;
+        let tempOptions = this.portalConfig.ldapOptions;
 
         tempOptions.username = login.username;
         tempOptions.userPassword = login.password;
@@ -127,25 +132,49 @@ export class LoginController {
 
     if(authMethodsApproved)
     {
-      await asyncForEach(this.authOptions.fortigateOptions.fortigates, async function(fortigate:any) {
+      await asyncForEach(this.portalConfig.fortigateOptions.fortigates, async function(fortigate:any) {
         try
         {
-         var logger: Logger = createLogger({level: 'info',
+        
+          let portalConfig = JSON.parse(fs.readFileSync('portalconfig.json', {encoding: 'utf8'}));
+          const fileTransport = new winstonModule.transports.DailyRotateFile({
+            filename: "backend-%DATE%.log",
+            maxSize: '10m',
+            maxFiles: '7d',
+            level: portalConfig.loggingOptions.defaultLevel,
+            zippedArchive: true,
+          });
+      
+          fileTransport.on('rotate', function(oldFilename, newFilename){
+            console.log(`Rotating log file from ${oldFilename} to ${newFilename}`);
+          });
+
+          var syslogTransport = new Syslog();
+          if(portalConfig.loggingOptions.syslogConfig.enabled)
+          {
+            syslogTransport = new Syslog({
+              host : portalConfig.loggingOptions.syslogConfig.host,
+              port : portalConfig.loggingOptions.syslogConfig.port,
+              protocol : portalConfig.loggingOptions.syslogConfig.protocol,
+              facility : portalConfig.loggingOptions.syslogConfig.facility,
+              localhost : portalConfig.loggingOptions.syslogConfig.localhost,
+              type : portalConfig.loggingOptions.syslogConfig.type,
+              app_name : portalConfig.loggingOptions.syslogConfig.app_name,
+              format: format.logstash()
+            });
+          }
+
+          var logger: Logger = createLogger({level: 'info',
          format: format.json(),
          defaultMeta: {framework: 'LoopBack'}, transports: [new WinstonTransports.Console(
             {
               level: 'info',
               format: format.combine(format.colorize(), format.simple())
-            }),new WinstonTransports.File(
-              {
-                filename: "backend.log",
-                maxsize: 10485760,
-                maxFiles: 5,
-                tailable: true,
-                zippedArchive: true
-              })
-            ]
+            }),
+            fileTransport]
           });
+          if(portalConfig.loggingOptions.syslogConfig.enabled)
+            logger.transports.push(syslogTransport);
           await (async () => {
 
             const client = got.extend({

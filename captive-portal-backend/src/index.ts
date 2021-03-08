@@ -3,20 +3,12 @@ import { RestBindings } from '@loopback/rest';
 import { format, LoggerOptions } from 'winston';
 import {ApplicationConfig, CaptivePortalBackendApplication} from './application';
 const os = require('os')
-
+const { graphqlHTTP } = require('express-graphql');
+import { createGraphQLSchema } from 'openapi-to-graphql';
+import { Oas3 } from 'openapi-to-graphql/lib/types/oas3';
 export * from './application';
-
-// var users = {user1: 'secret_password'}
-// var tephra = require('tephra')
-// var server = new tephra(
-//   'secret',
-//   1812, // authentication port
-//   1813, // accounting port
-//   3799, // change of authorisation port
-//   [ // define any vendor dictionaries for vendor-specific attributes
-
-//   ]
-// )
+const fs = require('fs');
+const portalConfig = JSON.parse(fs.readFileSync('portalconfig.json', {encoding: 'utf8'}));
 
 export async function main(options: ApplicationConfig = {}) {
   const app = new CaptivePortalBackendApplication(options);
@@ -28,52 +20,36 @@ export async function main(options: ApplicationConfig = {}) {
   console.log(`Server is running at ${url}`);
   console.log(`Try ${url}/ping`);
 
-  // server.on('Access-Request', function(packet:any, rinfo:any, accept:any, reject:any) 
-  // {
-  //   try
-  //   {
-  //     console.log(packet.attributes);
-  //     var username  = packet.attributes['User-Name'],
-  //         password = packet.attributes['User-Password']
-  //     if (username in users && users[username] === password) {
-  //       return accept(
-  //         [
-  //           // ['put', 'your'],
-  //           // ['response', 'attribute'],
-  //           // ['pairs', 'here']
-  //         ],
-  //         { /* and vendor attributes here */
-  //           // some_vendor: [
-  //           //   ['foo', 'bar']
-  //           // ]
-  //         },
-  //         console.log
-  //       )
-  //     }
-  //     reject([], {}, console.log)
-  //   }
-  //   catch(err)
-  //   {
-  //     console.log(err);
-  //   }
-  // }).on('Accounting-Request', function(packet:any, rinfo:any, respond:any) 
-  // {
-  //   // catch all accounting-requests
-  //   respond([], {}, console.log)
-  // }).on('Accounting-Request-Start', function(packet:any, rinfo:any, respond:any) 
-  // {
-  //   // or just catch specific accounting-request status types...
-  //   respond([], {}, console.log)
-  // }).on('Accounting-Request-Interim-Update', function(packet:any, rinfo:any, respond:any) 
-  // {
-  //   respond([], {}, console.log)
-  // }).on('Accounting-Request-Stop', function(packet:any, rinfo:any, respond:any) 
-  // {
-  //   respond([], {}, console.log)
-  // })
+  const graphqlPath = '/graphql';
+    let oas: Oas3;
+    await app.restServer.getApiSpec().then((resolved) => {oas = <Oas3>resolved}).finally(async () => {
+    const {schema} = await createGraphQLSchema(oas, {
+        strict: false,
+        viewer: true,
+        baseUrl: url,
+        headers: {
+            'X-Origin': 'GraphQL'
+        },
+        tokenJSONpath: '$.jwt'
+    })
 
-  // server.bind()
-  console.log("Radius Server On");
+    const handler =  graphqlHTTP( (request, response, graphQLParams) => ({
+        schema,
+        pretty: true,
+        graphiql: process.env.NODE_ENV === 'development', // Needed to activate apollo dev tools (Without true then interface does not load)
+        context: { jwt: getJwt(request) }
+    }))
+
+    // Get the jwt from the Authorization header and place in context.jwt, which is then referenced in tokenJSONpath
+    function getJwt(req:any) {
+        if (req.headers && req.headers.authorization) {
+            return req.headers.authorization.replace(/^Bearer /, '');
+        }
+    }
+
+    app.mountExpressRouter(graphqlPath, handler);
+    console.log(`Graphql API: ${url}${graphqlPath}`);
+  });
 
   return app;
 }

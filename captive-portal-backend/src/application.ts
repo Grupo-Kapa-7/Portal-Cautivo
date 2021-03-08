@@ -1,10 +1,10 @@
 import {BootMixin} from '@loopback/boot';
-import {ApplicationConfig, extensionFor} from '@loopback/core';
+import {ApplicationConfig, createBindingFromClass, extensionFor} from '@loopback/core';
 import {
   RestExplorerBindings,
   RestExplorerComponent,
 } from '@loopback/rest-explorer';
-import {RepositoryMixin} from '@loopback/repository';
+import {repository, RepositoryMixin} from '@loopback/repository';
 import {RestApplication} from '@loopback/rest';
 import {ServiceMixin} from '@loopback/service-proxy';
 import path from 'path';
@@ -18,10 +18,12 @@ import {
 import {MySequence} from './sequence';
 import { MysqlDataSource } from './datasources';
 import { AppUserService } from './services/user.service';
-import { UserCredentialsRepository } from './repositories';
+import { GuestMacAddressRepository, GuestUserRepository, UserCredentialsRepository } from './repositories';
 import {LoggingBindings, LoggingComponent, WinstonTransports, WINSTON_TRANSPORT} from '@loopback/logging';
 import { format, LoggerOptions, transport } from 'winston';
 import { extension } from 'mime';
+import { application } from 'express';
+import { RadiusComponent, RadiusServiceBindings } from './components';
 const winstonModule = require('winston');
 require('winston-daily-rotate-file');
 require('winston-syslog').Syslog;
@@ -36,6 +38,7 @@ export class CaptivePortalBackendApplication extends BootMixin(
   ServiceMixin(RepositoryMixin(RestApplication)),
 ) {
   constructor(options: ApplicationConfig = {}) {
+
     super(options);
 
     // Set up the custom sequence
@@ -127,5 +130,10 @@ export class CaptivePortalBackendApplication extends BootMixin(
       UserCredentialsRepository,
     )
 
+    this.dataSource(MysqlDataSource, RadiusServiceBindings.DATASOURCE_NAME);
+    this.bind(RadiusServiceBindings.USER_REPOSITORY).toClass(GuestUserRepository);
+    this.bind(RadiusServiceBindings.MACADDRESS_REPOSITORY).toClass(GuestMacAddressRepository);
+    this.component(RadiusComponent);
+    this.add(createBindingFromClass(RadiusComponent))
   }
 }

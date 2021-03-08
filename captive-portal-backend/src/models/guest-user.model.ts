@@ -15,6 +15,7 @@ export class GuestUser extends Entity {
     id: 1,
     length: 10,
     unsigned: true,
+    generated: true,
     mysql: {columnName: 'id', dataType: 'int', dataLength: null, unsigned: true, dataPrecision: 10, dataScale: 0, nullable: 'N'},
   })
   id: number;
@@ -49,6 +50,9 @@ export class GuestUser extends Entity {
   @property({
     type: 'string',
     length: 25,
+    index: {
+      unique: true,
+    },
     mysql: {columnName: 'mobilePhoneNumber', dataType: 'varchar', dataLength: 25, dataPrecision: null, dataScale: null, nullable: 'Y'},
   })
   mobilePhoneNumber?: string;

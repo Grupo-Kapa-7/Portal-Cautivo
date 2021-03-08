@@ -118,7 +118,7 @@ export class UserController {
     return currentUserProfile[securityId];
   }
 
-  @authenticate('jwt')
+  //@authenticate('jwt')
   @post('/api/signup', {
     responses: {
       '200': {
