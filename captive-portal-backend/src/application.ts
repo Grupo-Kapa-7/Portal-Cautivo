@@ -57,8 +57,8 @@ export class CaptivePortalBackendApplication extends BootMixin(
     });
     this.configure<LoggerOptions>(LoggingBindings.WINSTON_LOGGER).to({
       level: 'info',
-      format: format.json(),
-      defaultMeta: {framework: 'LoopBack'},
+      format: format.prettyPrint(),
+      defaultMeta: {framework: 'LoopBack', dev: 'Grupo Kapa 7, San Pedro Sula, Honduras, Centroamérica'},
     });
     this.configure(LoggingBindings.WINSTON_HTTP_ACCESS_LOGGER).to({format: 'remote address :remote-addr - x-forwarded-for :req[x-forwarded-for] :remote-user [:date[clf]] ":method :url HTTP/:http-version" :status :res[content-length] ":referrer" ":user-agent :response-time ms"'});
     const consoleTransport = new WinstonTransports.Console({
@@ -89,7 +89,8 @@ export class CaptivePortalBackendApplication extends BootMixin(
         facility : portalConfig.loggingOptions.syslogConfig.facility,
         localhost : portalConfig.loggingOptions.syslogConfig.localhost,
         type : portalConfig.loggingOptions.syslogConfig.type,
-        app_name : portalConfig.loggingOptions.syslogConfig.app_name
+        app_name : portalConfig.loggingOptions.syslogConfig.app_name,
+        format: format.logstash()
       });
 
       this.bind('loggin.winston.transports.syslog').to(syslogTransport).apply(extensionFor(WINSTON_TRANSPORT));
