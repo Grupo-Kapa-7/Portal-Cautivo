@@ -69,7 +69,9 @@
     "loopback-connector-mysql": "^5.4.4",
     "radclient": "^1.0.0",
     "tephra": "^1.0.7",
-    "tslib": "^2.0.0"
+    "tslib": "^2.0.0",
+    "winston-daily-rotate-file": "^4.5.0",
+    "winston-syslog": "^2.4.4"
   },
   "devDependencies": {
     "@loopback/build": "^6.2.9",

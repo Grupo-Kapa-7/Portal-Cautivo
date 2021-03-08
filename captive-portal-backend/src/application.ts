@@ -20,10 +20,17 @@ import { MysqlDataSource } from './datasources';
 import { AppUserService } from './services/user.service';
 import { UserCredentialsRepository } from './repositories';
 import {LoggingBindings, LoggingComponent, WinstonTransports, WINSTON_TRANSPORT} from '@loopback/logging';
-import { format, LoggerOptions } from 'winston';
+import { format, LoggerOptions, transport } from 'winston';
 import { extension } from 'mime';
+const winstonModule = require('winston');
+require('winston-daily-rotate-file');
+require('winston-syslog').Syslog;
+const fs = require('fs');
+
+const portalConfig = JSON.parse(fs.readFileSync('portalconfig.json', {encoding: 'utf8'}));
 
 export {ApplicationConfig};
+
 
 export class CaptivePortalBackendApplication extends BootMixin(
   ServiceMixin(RepositoryMixin(RestApplication)),
@@ -55,16 +62,39 @@ export class CaptivePortalBackendApplication extends BootMixin(
     });
     this.configure(LoggingBindings.WINSTON_HTTP_ACCESS_LOGGER).to({format: 'remote address :remote-addr - x-forwarded-for :req[x-forwarded-for] :remote-user [:date[clf]] ":method :url HTTP/:http-version" :status :res[content-length] ":referrer" ":user-agent :response-time ms"'});
     const consoleTransport = new WinstonTransports.Console({
-      level: 'info',
+      level: portalConfig.loggingOptions.defaultLevel,
       format: format.combine(format.colorize(), format.simple())
     });
-    const fileTransport = new WinstonTransports.File({
-      filename: "backend.log",
-      maxsize: 10485760,
-      maxFiles: 5,
-      tailable: true,
+    const fileTransport = new winstonModule.transports.DailyRotateFile({
+      filename: "backend-%DATE%.log",
+      maxSize: '10m',
+      maxFiles: '7d',
+      level: portalConfig.loggingOptions.defaultLevel,
       zippedArchive: true,
-    })
+    });
+
+    fileTransport.on('rotate', function(oldFilename, newFilename){
+      console.log(`Rotating log file from ${oldFilename} to ${newFilename}`);
+    });
+
+    //Syslog Logging
+    var syslogTransport = null;
+    if(portalConfig.loggingOptions.syslogConfig.enabled)
+    {
+      console.log("Enabling Syslog");
+      syslogTransport = new winstonModule.transports.Syslog({
+        host : portalConfig.loggingOptions.syslogConfig.host,
+        port : portalConfig.loggingOptions.syslogConfig.port,
+        protocol : portalConfig.loggingOptions.syslogConfig.protocol,
+        facility : portalConfig.loggingOptions.syslogConfig.facility,
+        localhost : portalConfig.loggingOptions.syslogConfig.localhost,
+        type : portalConfig.loggingOptions.syslogConfig.type,
+        app_name : portalConfig.loggingOptions.syslogConfig.app_name
+      });
+
+      this.bind('loggin.winston.transports.syslog').to(syslogTransport).apply(extensionFor(WINSTON_TRANSPORT));
+    }
+
     this.bind('loggin.winston.transports.console').to(consoleTransport).apply(extensionFor(WINSTON_TRANSPORT));
     this.bind('loggin.winston.transports.file').to(fileTransport).apply(extensionFor(WINSTON_TRANSPORT));
     this.component(LoggingComponent);
