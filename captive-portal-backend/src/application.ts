@@ -42,7 +42,7 @@ export class CaptivePortalBackendApplication extends BootMixin(
       path: '/explorer',
     });
     this.component(RestExplorerComponent);
-
+    
     //Logging
     this.configure(LoggingBindings.COMPONENT).to({
       enableFluent: false, // default to true
@@ -53,6 +53,7 @@ export class CaptivePortalBackendApplication extends BootMixin(
       format: format.json(),
       defaultMeta: {framework: 'LoopBack'},
     });
+    this.configure(LoggingBindings.WINSTON_HTTP_ACCESS_LOGGER).to({format: 'remote address :remote-addr - x-forwarded-for :req[x-forwarded-for] :remote-user [:date[clf]] ":method :url HTTP/:http-version" :status :res[content-length] ":referrer" ":user-agent :response-time ms"'});
     const consoleTransport = new WinstonTransports.Console({
       level: 'info',
       format: format.combine(format.colorize(), format.simple())

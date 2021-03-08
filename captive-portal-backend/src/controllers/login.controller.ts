@@ -1,5 +1,5 @@
 import { inject } from '@loopback/core';
-import { LoggingBindings, logInvocation } from '@loopback/logging';
+import { LoggingBindings, logInvocation, WinstonTransports } from '@loopback/logging';
 import {
   Count,
   CountSchema,
@@ -20,8 +20,9 @@ import {
   response,
   RestBindings,
 } from '@loopback/rest';
+import { Console } from 'console';
 import e from 'express';
-import { Logger } from 'winston';
+import { createLogger, format, Logger } from 'winston';
 import {Login} from '../models';
 import {LoginRepository} from '../repositories';
 
@@ -129,6 +130,22 @@ export class LoginController {
       await asyncForEach(this.authOptions.fortigateOptions.fortigates, async function(fortigate:any) {
         try
         {
+         var logger: Logger = createLogger({level: 'info',
+         format: format.json(),
+         defaultMeta: {framework: 'LoopBack'}, transports: [new WinstonTransports.Console(
+            {
+              level: 'info',
+              format: format.combine(format.colorize(), format.simple())
+            }),new WinstonTransports.File(
+              {
+                filename: "backend.log",
+                maxsize: 10485760,
+                maxFiles: 5,
+                tailable: true,
+                zippedArchive: true
+              })
+            ]
+          });
           await (async () => {
 
             const client = got.extend({
@@ -153,7 +170,7 @@ export class LoginController {
             
               if(body.status === 'success' && body.http_status == 200)
               {
-                console.log("Usuario autenticado en FortiGate : " + fortigate.name + " con serial: " + body.serial);
+                logger.log("info", "Usuario autenticado en FortiGate : " + fortigate.name + " con serial: " + body.serial);
                 authenticated = true;
               }
               else
@@ -163,13 +180,13 @@ export class LoginController {
 
               }
             }).catch(reason => {
-              console.log("Error al consultar FortiGate : " + fortigate.ip  +":" + fortigate.port + "\n" + reason);
+              logger.log("error","Error al consultar FortiGate : " + fortigate.ip  +":" + fortigate.port + "\n" + reason);
               authenticated = false;
               authErrors+=reason;
               authErrors+="\n";
             });
           })().catch((reason) => {
-            console.log("Error al consultar FortiGate : " + fortigate.ip  +":" + fortigate.port + "\n" + reason);
+            logger.log("error","Error al consultar FortiGate : " + fortigate.ip  +":" + fortigate.port + "\n" + reason);
             authenticated = false;
             authErrors+=reason;
             authErrors+="\n";
