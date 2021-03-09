@@ -43,6 +43,16 @@ export class Servicios {
         return this.http.get(this.globals.API_HOST + '/api/portal-terms/' + id);
     }
 
+    doFortiGateGuestLogin(url: string, magic: string, username: string, password: string)
+    {
+        var data = {
+            magic: magic,
+            username: username,
+            password: password
+        }
+        return this.http.post(url, data);
+    }
+
     registerMacForGuestUser( macAddress: string, idGuestUser: number)
     {
         var data = {

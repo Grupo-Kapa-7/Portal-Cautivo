@@ -27,6 +27,7 @@ export class CaptivePortalComponent implements OnInit {
   registered = false;
   portalTermsId = 0;
   portalTerms = "";
+  errorMessage = "";
   registeredUser : any;
   loginForm = new FormGroup({
     usernameControl : new FormControl('', [Validators.required]),
@@ -93,11 +94,42 @@ export class CaptivePortalComponent implements OnInit {
   {
     if(this.loginThroughForm.valid)
     {
+      this.spinner.show();
       this.loginError = false;
+      this.servicios.doFortiGateGuestLogin(this.route.snapshot.queryParams.post, 
+        this.route.snapshot.queryParams.magic, 
+        this.registeredUser.guestUser.email, 
+        this.registeredUser.macAddress).subscribe((result:any) => {
+          if(result)
+          {
+            this.spinner.hide();
+            console.log(result);
+            var date = new Date();
+            date.setTime(date.getTime()+(10*60*1000));
+            this.cookieService.set('username', this.registeredUser.guestUser.email, date, "/");
+            this.cookieService.set("nombres", this.registeredUser.guestUser.firstName, date, "/");
+            this.cookieService.set("apellidos", this.registeredUser.guestUser.lastName, date, "/");
+            this.cookieService.set("lastloginstatus", "success", date, "/");
+            this.router.navigate(['/loginsuccess']);
+          }
+        },
+        (error) => {
+          console.log(error);
+          this.spinner.hide();
+          this.loginError = true;
+          if(error.message)
+          {
+            this.errorMessage = error.message;
+            var date = new Date();
+            date.setTime(date.getTime()+(10*60*1000));
+            this.cookieService.set("lastloginstatus", "unauthorized",date, "/");
+            this.snackBar.open(error.statusText + " - No se pudo completar el login, intente de nuevo en unos momentos.", 'OK', {duration: 3000, horizontalPosition: 'center', verticalPosition: 'bottom'});
+          }
+        });
     }
     else
     {
-      console.log(this.loginThroughForm.controls)
+      this.errorMessage = "Debe aceptar los terminos y condiciones";
       this.loginError = true;
     }
   }
@@ -118,17 +150,41 @@ export class CaptivePortalComponent implements OnInit {
           {
             console.log(data);
             this.servicios.registerMacForGuestUser(this.registrationForm.controls.macHiddenControl.value, data.id).subscribe((dataMac :any) => {
-              this.spinner.hide();
               if(dataMac)
               {
                 console.log("Usuario y dispositivo registrado correctamente");
-                var date = new Date();
-                date.setTime(date.getTime()+(10*60*1000));
-                this.cookieService.set('username', dataMac.macAddress, date, "/");
-                this.cookieService.set("nombres", data.firstName, date, "/");
-                this.cookieService.set("apellidos", data.lastName, date, "/");
-                this.cookieService.set("lastloginstatus", "success", date, "/");
-                this.router.navigate(['/loginsuccess']);
+
+                //Hacer post a url de FortiGate
+                this.servicios.doFortiGateGuestLogin(this.route.snapshot.queryParams.post, 
+                  this.route.snapshot.queryParams.magic, 
+                  this.registrationForm.controls.emailControl.value, 
+                  this.route.snapshot.queryParams.usermac).subscribe((result:any) => {
+                    if(result)
+                    {
+                      this.spinner.hide();
+                      console.log(result);
+                      var date = new Date();
+                      date.setTime(date.getTime()+(10*60*1000));
+                      this.cookieService.set('username', data.email, date, "/");
+                      this.cookieService.set("nombres", data.firstName, date, "/");
+                      this.cookieService.set("apellidos", data.lastName, date, "/");
+                      this.cookieService.set("lastloginstatus", "success", date, "/");
+                      this.router.navigate(['/loginsuccess']);
+                    }
+                  },
+                  (error) => {
+                    this.spinner.hide();
+                    if(error.status)
+                    {
+                      console.log(error);
+                      var date = new Date();
+                      date.setTime(date.getTime()+(10*60*1000));
+                      this.cookieService.set("lastloginstatus", "unauthorized",date, "/");
+                      this.loginError = true;
+                      this.errorMessage = "No se pudo completar el registro";
+                      this.snackBar.open(error.statusText + " - No se pudo completar el registro", 'OK', {duration: 3000, horizontalPosition: 'center', verticalPosition: 'bottom'});
+                    }
+                  });
               }
             },
             (error) => {
@@ -140,6 +196,7 @@ export class CaptivePortalComponent implements OnInit {
                 date.setTime(date.getTime()+(10*60*1000));
                 this.cookieService.set("lastloginstatus", "unauthorized",date, "/");
                 this.loginError = true;
+                this.errorMessage = "No se pudo completar el registro";
                 this.snackBar.open(error.statusText + " - No se pudo completar el registro", 'OK', {duration: 3000, horizontalPosition: 'center', verticalPosition: 'bottom'});
               }
             })
@@ -154,6 +211,7 @@ export class CaptivePortalComponent implements OnInit {
             date.setTime(date.getTime()+(10*60*1000));
             this.cookieService.set("lastloginstatus", "unauthorized",date, "/");
             this.loginError = true;
+            this.errorMessage = "No se pudo completar el registro";
             this.snackBar.open(error.statusText + " - No se pudo completar el registro", 'OK', {duration: 3000, horizontalPosition: 'center', verticalPosition: 'bottom'});
           }
         })
@@ -200,6 +258,7 @@ export class CaptivePortalComponent implements OnInit {
           date.setTime(date.getTime()+(10*60*1000));
           this.cookieService.set("lastloginstatus", "unauthorized",date, "/");
           this.loginError = true;
+          this.errorMessage = error.statusText + " - Credenciales erroneas";
           this.snackBar.open(error.statusText + " - Credenciales erroneas", 'OK', {duration: 3000, horizontalPosition: 'center', verticalPosition: 'bottom'});
         }
       });
@@ -208,6 +267,7 @@ export class CaptivePortalComponent implements OnInit {
     else
     {
       this.loginError = true;
+      this.errorMessage = "Por favor llene los campos";
     }
   }
 

@@ -73,7 +73,7 @@
             <input type="hidden" formControlName="macHiddenControl" required>
             <input type="hidden" formControlName="magicHiddenControl" required>
             <button mat-raised-button color="primary" (click)="loginThrough()">Continuar</button>
-            <h3 *ngIf="loginError" style="color: red;">Debe aceptar los terminos y condiciones</h3>
+            <h3 *ngIf="loginError" style="color: red;">{{errorMessage}}</h3>
         </form>
     </div>
     <!-- <div fxHide.lt-md class="middleRight" fxLayout="column" fxFlex="25">
