@@ -13,7 +13,7 @@ El portal cautivo se divide en 2 modulos, un backend escrito en [Loopback 4](htt
 * Configuración de X número de portales cautivos con diferentes saludos, logos y soporta dos tipos de autenticación por portal cautivo : 'ldap' o 'guest'
 * Configuración de terminos y condiciones de uso por portal cautivo
 
-#### El backend requiere que el archivo portalconfig.json este en el mismo directorio donde se ejecute el servicio para su configuración y correcto funcionamiento. Un archivo de muestra se encuentra en el raíz del repositorio.
+#### *** El backend requiere que el archivo portalconfig.json este en el mismo directorio donde se ejecute el servicio para su configuración y correcto funcionamiento. Un archivo de muestra se encuentra en el raíz del repositorio. ***
 
 Revisa la carpeta de captive-portal-backend para saber mas de su uso.
 
