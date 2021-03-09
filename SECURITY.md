@@ -1,18 +1,13 @@
-# Security Policy
+# Política de Seguridad
 
-## Supported Versions
+## Versiones Soportadas
 
-Use this section to tell people about which versions of your project are
-currently being supported with security updates.
+Las siguientes versiones del software estan siendo soportadas actualmente
 
 | Version | Supported          |
 | ------- | ------------------ |
 | 1.0.x   | :white_check_mark: |
 
-## Reporting a Vulnerability
+## Reportando Vulnerabilidades
 
-Use this section to tell people how to report a vulnerability.
-
-Tell them where to go, how often they can expect to get an update on a
-reported vulnerability, what to expect if the vulnerability is accepted or
-declined, etc.
+Cualquier vulnerabilidad sobre el software puede ser reportada a traves de la sección de issues de Github o mediante un correo de manera privada a soporte@kapa7.com.
