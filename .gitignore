@@ -22,6 +22,7 @@ dist/
 captive-portal-backend-linux
 *zip
 portalconfig.json
+captive-portal-backend/portalconfig.json
 data
 data/*
 # Maven
