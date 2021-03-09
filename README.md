@@ -23,7 +23,7 @@ Escrito en Angular 11/NodeJS v14. Provee el portal cautivo que sera mostrado al 
 
 Revisa la carpeta de captive-portal-frontend para saber mas de su uso.
 
-### Requisitos
+## Requisitos
 * MySQL 8 con [autenticacion nativa](https://dev.mysql.com/doc/refman/8.0/en/native-pluggable-authentication.html) (Versiones menores no probadas)
 * NodeJS v14+ + NPM
 * Angular CLI v11
