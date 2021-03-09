@@ -1,0 +1,67 @@
+{
+    "ldapOptions" : {
+        "ldapOpts": {
+            "url": "ldap://192.168.1.100"
+        },
+        "adminDn" : "cn=Administrator,cn=Users,dc=company,dc=com",
+        "adminPassword": "Ld4Pp4$$w0rd",
+        "userSearchBase": "dc=company,dc=com",
+        "usernameAttribute": "samAccountName"
+    },
+    "loggingOptions": {
+        "defaultLevel" : "info",
+        "syslogConfig" : {
+            "enabled": true,
+            "host" : "192.168.1.100",
+            "port" : "514",
+            "protocol" : "udp4",
+            "facility" : "local0",
+            "localhost" : "captiveportal",
+            "type" : "BSD",
+            "app_name" : "CaptivePortalBackend"
+        }
+    },
+    "radiusServerOptions" : {
+        "secret" : "r4d1usS3c3t",
+        "radiusPort" : 1812,
+        "accountingPort" : 1813,
+        "authorizationPort": 3799,
+        "customDictionaries" : []
+    },
+    "databaseOptions" : {
+        "name": "mysql",
+        "connector": "mysql",
+        "host": "127.0.0.1",
+        "port": 3306,
+        "user": "mysqluser",
+        "password": "mysqlpassword",
+        "database": "captiveportal",
+        "reconnect" : true,
+        "reconnectTries" : 100,
+        "reconnectInterval" : 10000,
+        "connectionTimeout" : 10000,
+        "keepAlive" : true
+    },
+    "fortigateOptions" : {
+        "fortigates" : [
+            {
+                "name" : "FortiGate 100E EDGE",
+                "ip" : "192.168.1.99",
+                "api_key" : "generatedaccessapikeyshouldbehere",
+                "port": "443",
+                "ldapServers": [
+                    {"name" : "LDAP_SERVER_NAME_AS_CONFIGURED_IN_FORTIGATE"}
+                ]
+            },
+            {
+                "name" : "FortiGate 600E ISFW",
+                "ip" : "172.16.1.1",
+                "api_key" : "generatedaccessapikeyshouldbehere",
+                "port": "443",
+                "ldapServers": [
+                    {"name" : "LDAP_SERVER_NAME_AS_CONFIGURED_IN_FORTIGATE"}
+                ]
+            }
+        ]
+    }
+}
