@@ -64,6 +64,11 @@ export class Servicios {
             )
     }
 
+    comprobarAutenticacionConFortiGates(username: string, miIP: string, todosRequeridos: boolean = false)
+    {
+        return this.http.get(this.globals.API_HOST + '/api/login/getIPAuthenticationStatus?ip=' + miIP + '&username=' + username + '&allRequired=' + todosRequeridos);
+    }
+
     registerMacForGuestUser( macAddress: string, idGuestUser: number)
     {
         var data = {

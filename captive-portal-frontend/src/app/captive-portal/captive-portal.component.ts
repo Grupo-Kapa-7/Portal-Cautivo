@@ -1,3 +1,4 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { Component, Inject, OnInit } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { MatDialog, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
@@ -5,6 +6,8 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { Router, ActivatedRoute, ParamMap } from '@angular/router';
 import { CookieService } from 'ngx-cookie-service';
 import { NgxSpinnerService } from 'ngx-spinner';
+import { concat, iif, interval, of, throwError } from 'rxjs';
+import { map, mergeMap, retry, retryWhen, take, delay, catchError, concatMap } from 'rxjs/operators';
 import { Servicios } from '../servicios/servicios';
 
 interface CaptivePortalTermsData {
@@ -102,15 +105,60 @@ export class CaptivePortalComponent implements OnInit {
         this.registeredUser.macAddress).then((result:any) => {
           if(result)
           {
-            this.spinner.hide();
-            console.log(result);
-            var date = new Date();
-            date.setTime(date.getTime()+(10*60*1000));
-            this.cookieService.set('username', this.registeredUser.guestUser.email, date, "/");
-            this.cookieService.set("nombres", this.registeredUser.guestUser.firstName, date, "/");
-            this.cookieService.set("apellidos", this.registeredUser.guestUser.lastName, date, "/");
-            this.cookieService.set("lastloginstatus", "success", date, "/");
-            this.router.navigate(['/loginsuccess']);
+            //Chequear que se haya autenticado
+            var retryCount = 0;
+            this.servicios.comprobarAutenticacionConFortiGates(this.registeredUser.guestUser.email, this.myip).pipe(
+              map((auth:any) => {
+                retryCount++;
+                console.log(`Retry count ${retryCount}`)
+                if(retryCount>5)
+                {
+                  console.log("Stop retrying, throw exception")
+                  return auth;
+                }
+                else if(auth.status !== 'AUTHENTICATED')
+                {
+                  console.log("Still not authenticated");
+                  throw new Error('NOT AUTHENTICATED');
+                }
+                else
+                  return auth;
+              }),
+              retryWhen(errors => errors.pipe(take(6),delay(2000), catchError(this.handleError)),
+            )).subscribe((auth) => {
+                if(auth.status === 'AUTHENTICATED')
+                {
+                  this.spinner.hide();
+                  console.log(auth);
+                  var date = new Date();
+                  date.setTime(date.getTime()+(10*60*1000));
+                  this.cookieService.set('username', this.registeredUser.guestUser.email, date, "/");
+                  this.cookieService.set("nombres", this.registeredUser.guestUser.firstName, date, "/");
+                  this.cookieService.set("apellidos", this.registeredUser.guestUser.lastName, date, "/");
+                  this.cookieService.set("lastloginstatus", "success", date, "/");
+                  this.router.navigate(['/loginsuccess']);
+                }
+                else if(auth.status === 'FAIL')
+                {
+                  this.spinner.hide();
+                  var date = new Date();
+                  date.setTime(date.getTime()+(10*60*1000));
+                  this.cookieService.set("lastloginstatus", "unauthorized",date, "/");
+                  this.loginError = true;
+                  this.errorMessage = "No se pudo completar el login";
+                  this.snackBar.open("No se pudo completar el login, intentelo de nuevo", 'OK', {duration: 3000, horizontalPosition: 'center', verticalPosition: 'bottom'});
+                }
+            },
+            (error)=> {
+              console.error(error);
+              this.spinner.hide();
+              var date = new Date();
+              date.setTime(date.getTime()+(10*60*1000));
+              this.cookieService.set("lastloginstatus", "unauthorized",date, "/");
+              this.loginError = true;
+              this.errorMessage = "No se pudo completar el login";
+              this.snackBar.open("No se pudo completar el login, intentelo de nuevo", 'OK', {duration: 3000, horizontalPosition: 'center', verticalPosition: 'bottom'});
+            });
           }
         },
         (error) => {
@@ -123,7 +171,7 @@ export class CaptivePortalComponent implements OnInit {
             var date = new Date();
             date.setTime(date.getTime()+(10*60*1000));
             this.cookieService.set("lastloginstatus", "unauthorized",date, "/");
-            this.snackBar.open(error.statusText + " - No se pudo completar el login, intente de nuevo en unos momentos.", 'OK', {duration: 3000, horizontalPosition: 'center', verticalPosition: 'bottom'});
+            this.snackBar.open("No se pudo completar el login, intente de nuevo en unos momentos.", 'OK', {duration: 3000, horizontalPosition: 'center', verticalPosition: 'bottom'});
           }
         });
     }
@@ -132,6 +180,18 @@ export class CaptivePortalComponent implements OnInit {
       this.errorMessage = "Debe aceptar los terminos y condiciones";
       this.loginError = true;
     }
+  }
+
+  handleError(error: HttpErrorResponse)
+  {
+    console.error(error);
+    var date = new Date();
+    date.setTime(date.getTime()+(10*60*1000));
+    this.cookieService.set("lastloginstatus", "unauthorized",date, "/");
+    this.loginError = true;
+    this.errorMessage = "No se pudo completar el registro";
+    this.snackBar.open(error.statusText + " - No se pudo completar el registro", 'OK', {duration: 3000, horizontalPosition: 'center', verticalPosition: 'bottom'});
+    return throwError('Intentelo mas tarde');
   }
 
   registerAndLogin()
@@ -161,15 +221,60 @@ export class CaptivePortalComponent implements OnInit {
                   this.route.snapshot.queryParams.usermac).then((result:any) => {
                     if(result)
                     {
-                      this.spinner.hide();
-                      console.log(result);
-                      var date = new Date();
-                      date.setTime(date.getTime()+(10*60*1000));
-                      this.cookieService.set('username', data.email, date, "/");
-                      this.cookieService.set("nombres", data.firstName, date, "/");
-                      this.cookieService.set("apellidos", data.lastName, date, "/");
-                      this.cookieService.set("lastloginstatus", "success", date, "/");
-                      this.router.navigate(['/loginsuccess']);
+                      //Chequear que se haya autenticado
+                      var retryCount = 0;
+                      this.servicios.comprobarAutenticacionConFortiGates(this.registeredUser.guestUser.email, this.myip).pipe(
+                        map((auth:any) => {
+                          retryCount++;
+                          console.log(`Retry count ${retryCount}`)
+                          if(retryCount>5)
+                          {
+                            console.log("Stop retrying, throw exception")
+                            return auth;
+                          }
+                          else if(auth.status !== 'AUTHENTICATED')
+                          {
+                            console.log("Still not authenticated");
+                            throw new Error('NOT AUTHENTICATED');
+                          }
+                          else
+                            return auth;
+                        }),
+                        retryWhen(errors => errors.pipe(take(6),delay(2000), catchError(this.handleError)),
+                      )).subscribe((auth) => {
+                          if(auth.status === 'AUTHENTICATED')
+                          {
+                            this.spinner.hide();
+                            console.log(auth);
+                            var date = new Date();
+                            date.setTime(date.getTime()+(10*60*1000));
+                            this.cookieService.set('username', this.registeredUser.guestUser.email, date, "/");
+                            this.cookieService.set("nombres", this.registeredUser.guestUser.firstName, date, "/");
+                            this.cookieService.set("apellidos", this.registeredUser.guestUser.lastName, date, "/");
+                            this.cookieService.set("lastloginstatus", "success", date, "/");
+                            this.router.navigate(['/loginsuccess']);
+                          }
+                          else if(auth.status === 'FAIL')
+                          {
+                            this.spinner.hide();
+                            var date = new Date();
+                            date.setTime(date.getTime()+(10*60*1000));
+                            this.cookieService.set("lastloginstatus", "unauthorized",date, "/");
+                            this.loginError = true;
+                            this.errorMessage = "No se pudo completar el login";
+                            this.snackBar.open("No se pudo completar el login, intentelo de nuevo", 'OK', {duration: 3000, horizontalPosition: 'center', verticalPosition: 'bottom'});
+                          }
+                      },
+                      (error)=> {
+                        console.error(error);
+                        this.spinner.hide();
+                        var date = new Date();
+                        date.setTime(date.getTime()+(10*60*1000));
+                        this.cookieService.set("lastloginstatus", "unauthorized",date, "/");
+                        this.loginError = true;
+                        this.errorMessage = "No se pudo completar el login";
+                        this.snackBar.open("No se pudo completar el login, intentelo de nuevo", 'OK', {duration: 3000, horizontalPosition: 'center', verticalPosition: 'bottom'});
+                      });
                     }
                   },
                   (error) => {
@@ -283,6 +388,16 @@ export class CaptivePortalComponent implements OnInit {
     console.log(this.route.snapshot.params.name);
   
     this.spinner.show();
+
+    await this.servicios.getMyMip().subscribe(async (myip: any) => {
+      if(myip)
+      {
+        this.myip = myip.srcip;
+      }
+    },
+    (error) => {
+      console.log(error);
+    });
 
     if(this.captivePortalName != "default")
       await this.servicios.getPortalData(this.captivePortalName).subscribe(async (data: any) => {

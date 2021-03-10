@@ -240,6 +240,110 @@ export class LoginController {
     }
   }
 
+  @get('/api/login/getIPAuthenticationStatus')
+  @response(200, {
+    description: 'Revisar el status a traves de los FortiGates y verificar si en todos o en uno hay un login valido para la ip',
+  })
+  async getAuthenticationStatus(
+    @param.query.string('ip') ip: string,
+    @param.query.string('username') username: string,
+    @param.query.boolean('allRequired') allRequired : boolean = false,
+  ): Promise<Object>{
+    var status = {status: "FAIL", username: username, ip: ip};
+    const fortigateCount = this.portalConfig.fortigateOptions.fortigates.length;
+    var authOKCount = 0;
+    this.logger.log('info', `Checking user ${username} with ip ${ip}`);
+    await asyncForEach(this.portalConfig.fortigateOptions.fortigates, async function(fortigate:any) {
+      
+      let portalConfig = JSON.parse(fs.readFileSync('portalconfig.json', {encoding: 'utf8'}));
+        const fileTransport = new winstonModule.transports.DailyRotateFile({
+          filename: "backend-%DATE%.log",
+          maxSize: '10m',
+          maxFiles: '7d',
+          level: portalConfig.loggingOptions.defaultLevel,
+          zippedArchive: true,
+      });
+    
+        fileTransport.on('rotate', function(oldFilename, newFilename){
+          console.log(`Rotating log file from ${oldFilename} to ${newFilename}`);
+        });
+
+        var syslogTransport = new Syslog();
+        if(portalConfig.loggingOptions.syslogConfig.enabled)
+        {
+          syslogTransport = new Syslog({
+            host : portalConfig.loggingOptions.syslogConfig.host,
+            port : portalConfig.loggingOptions.syslogConfig.port,
+            protocol : portalConfig.loggingOptions.syslogConfig.protocol,
+            facility : portalConfig.loggingOptions.syslogConfig.facility,
+            localhost : portalConfig.loggingOptions.syslogConfig.localhost,
+            type : portalConfig.loggingOptions.syslogConfig.type,
+            app_name : portalConfig.loggingOptions.syslogConfig.app_name,
+            format: format.logstash()
+          });
+        }
+
+      var logger: Logger = createLogger({level: 'info',
+      format: format.json(),
+      defaultMeta: {framework: 'LoopBack'}, transports: [new WinstonTransports.Console(
+        {
+          level: 'info',
+          format: format.combine(format.colorize(), format.simple())
+        }),
+        fileTransport]
+      });
+      if(portalConfig.loggingOptions.syslogConfig.enabled)
+        logger.transports.push(syslogTransport);
+      logger.log('info', `Checking FortiGate ${fortigate.ip}`);
+      const client = await got.extend({
+        headers: {
+          'Authorization' : 'Bearer ' + fortigate.api_key 
+        }
+      })
+  
+      try
+      {
+        const {body} = await client.get('https://' + fortigate.ip + ':' + fortigate.port + '/api/v2/monitor/user/firewall', 
+        {
+          https: {
+            rejectUnauthorized: false
+          },
+          responseType: 'json'
+        });
+
+        var found = body.results.find(x => x.ipaddr === ip);
+        if(found && found.username === username)
+        {
+          logger.log('info', `Found user ${username} with IP ${ip} authenticated in FortiGate ${fortigate.ip}`);
+          authOKCount++;
+        }
+
+      }
+      catch(err)
+      {
+        logger.info('error', err);
+      }
+
+
+
+    }).catch((error) => (this.logger.log('error', error)));
+
+
+    if(allRequired)
+    {
+      if(authOKCount == fortigateCount)
+      {
+        status.status = 'AUTHENTICATED';
+      }
+    }
+    else if(authOKCount>0)
+    {
+      status.status = 'AUTHENTICATED';
+    }
+
+    return status;
+  }
+
   @get('/api/login/myip')
   @response(200, {
     description: 'Encontrar mi ip',
