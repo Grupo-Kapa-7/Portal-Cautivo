@@ -99,7 +99,7 @@ export class CaptivePortalComponent implements OnInit {
       this.servicios.doFortiGateGuestLogin(this.route.snapshot.queryParams.post, 
         this.route.snapshot.queryParams.magic, 
         this.registeredUser.guestUser.email, 
-        this.registeredUser.macAddress).subscribe((result:any) => {
+        this.registeredUser.macAddress).then((result:any) => {
           if(result)
           {
             this.spinner.hide();
@@ -158,7 +158,7 @@ export class CaptivePortalComponent implements OnInit {
                 this.servicios.doFortiGateGuestLogin(this.route.snapshot.queryParams.post, 
                   this.route.snapshot.queryParams.magic, 
                   this.registrationForm.controls.emailControl.value, 
-                  this.route.snapshot.queryParams.usermac).subscribe((result:any) => {
+                  this.route.snapshot.queryParams.usermac).then((result:any) => {
                     if(result)
                     {
                       this.spinner.hide();

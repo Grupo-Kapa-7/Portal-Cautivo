@@ -1,7 +1,8 @@
 import { Injectable } from "@angular/core";
-import {HttpClient, HttpParams} from '@angular/common/http';
+import {HttpClient, HttpHeaders, HttpParams} from '@angular/common/http';
 import { Globals } from "../globals";
 import { last } from "rxjs/operators";
+import { from } from 'rxjs';
 
 @Injectable()
 export class Servicios {
@@ -45,12 +46,22 @@ export class Servicios {
 
     doFortiGateGuestLogin(url: string, magic: string, username: string, password: string)
     {
-        var data = {
-            magic: magic,
-            username: username,
-            password: password
-        }
-        return this.http.post(url, data);
+        // const data = new HttpParams().set('magic', magic).set('username', username).set('password', password);
+        // console.log(data.toString());
+        // return this.http.post(url, data.toString(), { responseType: 'text', headers: new HttpHeaders().set('Accept', '*/*').set('Content-Type', 'application/x-www-form-urlencoded')});
+        const data = new HttpParams().set('magic', magic).set('username', username).set('password', password);
+        return fetch(
+                url,
+                {
+                    body: data.toString(),
+                    headers: {
+                        'Accept': '*/*',
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    method: 'POST',
+                    mode: 'no-cors',
+                }
+            )
     }
 
     registerMacForGuestUser( macAddress: string, idGuestUser: number)

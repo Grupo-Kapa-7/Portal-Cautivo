@@ -82,24 +82,30 @@ export class RadiusComponent implements Component, LifeCycleObserver{
       {
         var username  = packet.attributes['User-Name'],
             password = packet.attributes['User-Password'];
-        const user = await (await guestUserRepository).findOne({where: {email: username}});
-        if(user)
+        if(username && password)
         {
-          const mac = await (await guestMacAddressRepository).findOne({where: {"and" : [{idGuestUser: user.id}, {macAddress: password}]}});
-          if(mac)
+          const user = await (await guestUserRepository).findOne({where: {email: username}});
+          if(user && password)
           {
-            logger.log('info', `RADIUS: User ${user.email} authenticated successfully`);
-            return accept(
-              [
-                // ['put', 'your'],
-                // ['response', 'attribute'],
-                // ['pairs', 'here']
-              ],
-              { /* and vendor attributes here */
-                // some_vendor: [
-                //   ['foo', 'bar']
-                // ]
-              })
+            logger.log('info', user);
+            logger.log('info', password);
+            const mac = await (await guestMacAddressRepository).findOne({where: {"and" : [{idGuestUser: user.id}, {macAddress: password}]}});
+            if(mac)
+            {
+              logger.log('info', mac);
+              logger.log('info', `RADIUS: User ${user.email} authenticated successfully`);
+              return accept(
+                [
+                  // ['put', 'your'],
+                  // ['response', 'attribute'],
+                  // ['pairs', 'here']
+                ],
+                { /* and vendor attributes here */
+                  // some_vendor: [
+                  //   ['foo', 'bar']
+                  // ]
+                })
+            }
           }
         }
         logger.log('error', `RADIUS: User ${username} with Mac Address ${password} failed to authenticate`);
