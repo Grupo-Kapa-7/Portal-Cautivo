@@ -79,6 +79,11 @@ export class Servicios {
         return this.http.post(this.globals.API_HOST + "/api/guest-mac-addresses", data);
     }
 
+    checkUserIsRegistered(email: string)
+    {
+        return this.http.get(this.globals.API_HOST + '/api/guest-user/findByEmail/' + email);
+    }
+
     getGuestUserFromMac(macAddress: string)
     {
         return this.http.get(this.globals.API_HOST + '/api/guest-mac-addresses/' + macAddress + '?filter[include][]=guestUser');

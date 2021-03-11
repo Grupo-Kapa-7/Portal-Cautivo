@@ -117,6 +117,23 @@ export class GuestUserController {
     return this.guestUserRepository.findById(id, filter);
   }
 
+  @authenticate.skip()
+  @get('/api/guest-user/findByEmail/{email}')
+  @response(200, {
+    description: 'GuestUser model instance',
+    content: {
+      'application/json': {
+        schema: getModelSchemaRef(GuestUser, {includeRelations: true}),
+      },
+    },
+  })
+  async findByEmail(
+    @param.path.string('email') email: string,
+    @param.filter(GuestUser, {exclude: 'where'}) filter?: Filter<GuestUser>
+  ): Promise<GuestUser|null> {
+    return this.guestUserRepository.findOne({where: {email: email}});
+  }
+
 
   @authenticate('jwt')
   @patch('/api/guest-user/{id}')

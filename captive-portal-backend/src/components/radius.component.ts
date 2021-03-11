@@ -11,6 +11,19 @@ import DailyRotateFile = require("winston-daily-rotate-file");
 import { SyslogTransportOptions, Syslog } from 'winston-syslog';
 import { createLogger, format, Logger } from 'winston';
 import winston from 'winston/lib/winston/config';
+import { isEmpty } from 'lodash';
+const radius = require('radius');
+const dgram = require('dgram');
+const EventEmitter = require('events');
+const util = require('util');
+const ip = require('ip');
+const chap = require('chap');
+const crypto = require('crypto');
+
+const MicrosoftVendorID = 311;
+const ChallengeKey = 11;
+const NtResponseKey = 1;
+const NtResponse2Key = 25;
 
 export namespace RadiusServiceBindings {
   export const USER_REPOSITORY = 'repositories.GuestUserRepository';
@@ -36,7 +49,6 @@ export class RadiusComponent implements Component, LifeCycleObserver{
   constructor(@inject(`datasources.mysql`)
   dataSource: juggler.DataSource, @repository(GuestUserRepository) guestUserRepository: GuestUserRepository, @repository(GuestMacAddressRepository) guestMacAddressRepository: GuestMacAddressRepository, @inject(CoreBindings.APPLICATION_INSTANCE) private app) 
   {
-
     const fileTransport = new winstonModule.transports.DailyRotateFile({
       filename: "backend-%DATE%.log",
       maxSize: '10m',
@@ -76,40 +88,161 @@ export class RadiusComponent implements Component, LifeCycleObserver{
     if(portalConfig.loggingOptions.syslogConfig.enabled)
       logger.transports.push(syslogTransport);
 
-    this.server.on('Access-Request', async function(packet:any, rinfo:any, accept:any, reject:any) 
+    this.server.on('Access-Request', async (packet:any, rinfo:any, accept:any, reject:any) => 
     {
       try
       {
+        //Check type of password
+        var chap = false;
+        var mschap = false;
+        var authenticated = false;
+        var chapChallenge = '';
         var username  = packet.attributes['User-Name'],
             password = packet.attributes['User-Password'];
+        
+        if(packet.attributes['CHAP-Password'] !== undefined)
+        {
+          chap = true;
+          password = 'Encrypted CHAP Password';
+          if (typeof packet.attributes['CHAP-Challenge'] !== 'undefined') {
+            chapChallenge = packet.attributes['CHAP-Challenge'];
+          } else {
+              chapChallenge = packet.authenticator;
+          }
+
+        }
+
         if(username && password)
         {
           const user = await (await guestUserRepository).findOne({where: {email: username}});
-          if(user && password)
+          if(user)
           {
-            logger.log('info', user);
-            logger.log('info', password);
-            const mac = await (await guestMacAddressRepository).findOne({where: {"and" : [{idGuestUser: user.id}, {macAddress: password}]}});
-            if(mac)
+            var mac: any;
+            if(!chap && !mschap)
+              mac = await (await guestMacAddressRepository).findOne({where: {"and" : [{idGuestUser: user.id}, {macAddress: password}]}});
+            else if(chap)
+              mac = await (await guestMacAddressRepository).find({where: {idGuestUser: user.id}});
+            if(mac && !chap && !mschap)
             {
               logger.log('info', mac);
-              logger.log('info', `RADIUS: User ${user.email} authenticated successfully`);
-              return accept(
-                [
-                  // ['put', 'your'],
-                  // ['response', 'attribute'],
-                  // ['pairs', 'here']
-                ],
-                { /* and vendor attributes here */
-                  // some_vendor: [
-                  //   ['foo', 'bar']
-                  // ]
-                })
+              logger.log('info', `RADIUS: User ${user.email} authenticated successfully via PAP`);
+              return accept([],{});
             }
+            else if(mac && chap)
+            {
+              for(let i = 0; i < mac.length; i++ )
+              {
+                  if(this.chapMatch(mac[i].macAddress, packet.attributes['CHAP-Password'], chapChallenge))
+                  {
+                    logger.log('info', `RADIUS: User ${user.email} authenticated successfully via CHAP`);
+                    authenticated = true;
+                    accept([], {});
+                    break;
+                  }
+              };
+              if(!authenticated)
+                reject([], {});
+            }
+            else
+              if(!authenticated)
+                reject([], {});
+          }
+          //Look in proxies
+          else
+          {
+            var radiusServer = '192.168.21.246';
+            logger.log('info', 'Proxying RADIUS packet to configured RADIUS Servers');
+
+            var newPacket: any;
+            if(!chap && !mschap)
+            {
+              newPacket = {
+                code: "Access-Request",
+                secret: portalConfig.radiusServerOptions.secret,
+                identifier:  Math.floor(Math.random() * (255-1)) + 1,
+                attributes: [
+                  ['NAS-IP-Address', ip.address()],
+                  ['User-Name', username],
+                  ['User-Password', password]
+                ]
+              }
+            }
+            else if(chap)
+            {
+              newPacket = {
+                code: "Access-Request",
+                secret: portalConfig.radiusServerOptions.secret,
+                identifier:  Math.floor(Math.random() * (255-1)) + 1,
+                attributes: [
+                  ['NAS-IP-Address', ip.address()],
+                  ['User-Name', username],
+                  ['CHAP-Password', packet.attributes['CHAP-Password']],
+                  ['CHAP-Challenge', packet.authenticator]
+                ]
+              }
+            }
+
+            var client = dgram.createSocket("udp4");
+
+            client.bind(0);
+            
+            var response_count = 0;
+
+            var encoded = radius.encode(newPacket);
+
+            var sent_packets = [{
+              raw_packet: encoded,
+              secret: newPacket.secret
+            }];
+
+            client.on('message', function(msg, rinfo) {
+              var response = radius.decode({packet: msg, secret: portalConfig.radiusServerOptions.secret});
+              var request = sent_packets[0];
+              // although it's a slight hassle to keep track of packets, it's a good idea to verify
+              // responses to make sure you are talking to a server with the same shared secret
+              var valid_response = radius.verify_response({
+                response: msg,
+                request: request.raw_packet,
+                secret: request.secret
+              });
+              if (valid_response) {
+                if(response.code === 'Access-Accept')
+                {
+                  logger.log('info', 'Got valid response ' + response.code + ' for packet id ' + response.identifier + ' for user ' + username + ' from RADIUS Server ' + radiusServer);
+                  logger.log('info', `RADIUS: User ${username} authenticated successfully`);
+                  client.close();
+                  authenticated = true;
+                  var keys = Object.keys(response.attributes);
+                  var attributesArray : any[] = [];
+                  accept(response.raw_attributes, {});
+                }
+                else if(response.code === 'Access-Reject')
+                {
+                  logger.log('error', `RADIUS: User ${username} with Password ${password} failed to authenticate`);
+                  client.close();
+                  reject([], {});
+                }
+              } else {
+                console.log('WARNING: Got invalid response ' + response.code + ' for packet id ' + response.identifier);
+                // don't take action since server cannot be trusted (but maybe alert user that shared secret may be incorrect)
+              }
+            
+              if (++response_count == 3) {
+                client.close();
+                logger.log('error', `RADIUS: User ${username} with Password ${password} failed to authenticate`);
+                reject([], {})
+              }
+            });
+
+            client.send(encoded, 0, encoded.length, 1812, radiusServer);
+
           }
         }
-        logger.log('error', `RADIUS: User ${username} with Mac Address ${password} failed to authenticate`);
-        reject([], {})
+        else
+        {
+          logger.log('error', `RADIUS: User ${username} with Password ${password} failed to authenticate`);
+          reject([], {})
+        }
       }
       catch(err)
       {
@@ -132,6 +265,17 @@ export class RadiusComponent implements Component, LifeCycleObserver{
     })
 
   }
+
+  public chapMatch(cPassword, chapPassword, challenge) {
+    let hash = chapPassword.slice(1);
+    let md5 = crypto.createHash('md5');
+    md5.write(chapPassword.slice(0, 1));
+    md5.write(Buffer.from(cPassword));
+    md5.write(challenge);
+    let calc = md5.digest('hex');
+
+    return hash.equals(Buffer.from(calc, 'hex'));
+}
 
   start()
   {

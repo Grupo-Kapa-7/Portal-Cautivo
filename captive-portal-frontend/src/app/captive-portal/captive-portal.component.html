@@ -59,7 +59,8 @@
             <br>
             <h3 *ngIf="loginError" style="color: red;">Error al crear sesi&oacute;n</h3>
         </form>
-        <h1 *ngIf="walledGarden && registered">Bienvenido {{registeredUser.guestUser.firstName}} {{registeredUser.guestUser.lastName}}</h1>
+        <span style="padding-top: 20px;"></span>
+        <h1 *ngIf="walledGarden && registered">Bienvenido {{registeredUser?.guestUser.firstName}} {{registeredUser?.guestUser.lastName}}</h1>
         <br *ngIf="walledGarden && registered">
         <h3 *ngIf="walledGarden && registered">Acepte los terminos y condiciones para continuar</h3>
         <form [formGroup]="loginThroughForm" *ngIf="walledGarden && registered">

@@ -11,6 +11,7 @@ const fs = require('fs');
 const portalConfig = JSON.parse(fs.readFileSync('portalconfig.json', {encoding: 'utf8'}));
 
 export async function main(options: ApplicationConfig = {}) {
+  process.setMaxListeners(0);
   const app = new CaptivePortalBackendApplication(options);
   await app.boot();
   await app.migrateSchema();

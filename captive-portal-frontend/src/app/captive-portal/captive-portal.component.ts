@@ -202,14 +202,16 @@ export class CaptivePortalComponent implements OnInit {
       this.spinner.show();
       console.log("Performing login type:" + this.loginType + " to user : " + this.registrationForm.controls.firstNameControl.value)
 
-      this.servicios.registerGuestUser(this.registrationForm.controls.firstNameControl.value, 
-        this.registrationForm.controls.lastNameControl.value, 
-        this.registrationForm.controls.emailControl.value,
-        this.registrationForm.controls.phoneNumberControl.value).subscribe((data:any) => {
-          if(data)
+      this.servicios.checkUserIsRegistered(this.registrationForm.controls.emailControl.value).subscribe((user:any)=> {
+        if(user)
+        {
+          if(user.email === this.registrationForm.controls.emailControl.value)
           {
-            console.log(data);
-            this.servicios.registerMacForGuestUser(this.registrationForm.controls.macHiddenControl.value, data.id).subscribe((dataMac :any) => {
+            console.log('Usuario ya estaba registrado');
+            this.registeredUser = {guestUser : user};
+            this.registered = true;
+            this.loginThroughForm.controls.acceptTerms.setValue(true);
+            this.servicios.registerMacForGuestUser(this.registrationForm.controls.macHiddenControl.value, user.id).subscribe((dataMac :any) => {
               if(dataMac)
               {
                 console.log("Usuario y dispositivo registrado correctamente");
@@ -304,22 +306,134 @@ export class CaptivePortalComponent implements OnInit {
                 this.errorMessage = "No se pudo completar el registro";
                 this.snackBar.open(error.statusText + " - No se pudo completar el registro", 'OK', {duration: 3000, horizontalPosition: 'center', verticalPosition: 'bottom'});
               }
+            });
+          }
+        }
+        else
+        {
+          this.servicios.registerGuestUser(this.registrationForm.controls.firstNameControl.value, 
+            this.registrationForm.controls.lastNameControl.value, 
+            this.registrationForm.controls.emailControl.value,
+            this.registrationForm.controls.phoneNumberControl.value).subscribe((data:any) => {
+              if(data)
+              {
+                this.registeredUser = data;
+                this.servicios.registerMacForGuestUser(this.registrationForm.controls.macHiddenControl.value, data.id).subscribe((dataMac :any) => {
+                  if(dataMac)
+                  {
+                    console.log("Usuario y dispositivo registrado correctamente");
+    
+                    //Hacer post a url de FortiGate
+                    this.servicios.doFortiGateGuestLogin(this.route.snapshot.queryParams.post, 
+                      this.route.snapshot.queryParams.magic, 
+                      this.registrationForm.controls.emailControl.value, 
+                      this.route.snapshot.queryParams.usermac).then((result:any) => {
+                        if(result)
+                        {
+                          //Chequear que se haya autenticado
+                          var retryCount = 0;
+                          this.servicios.comprobarAutenticacionConFortiGates(this.registeredUser.guestUser.email, this.myip).pipe(
+                            map((auth:any) => {
+                              retryCount++;
+                              console.log(`Retry count ${retryCount}`)
+                              if(retryCount>5)
+                              {
+                                console.log("Stop retrying, throw exception")
+                                return auth;
+                              }
+                              else if(auth.status !== 'AUTHENTICATED')
+                              {
+                                console.log("Still not authenticated");
+                                throw new Error('NOT AUTHENTICATED');
+                              }
+                              else
+                                return auth;
+                            }),
+                            retryWhen(errors => errors.pipe(take(6),delay(2000), catchError(this.handleError)),
+                          )).subscribe((auth) => {
+                              if(auth.status === 'AUTHENTICATED')
+                              {
+                                this.spinner.hide();
+                                console.log(auth);
+                                var date = new Date();
+                                date.setTime(date.getTime()+(10*60*1000));
+                                this.cookieService.set('username', this.registeredUser.guestUser.email, date, "/");
+                                this.cookieService.set("nombres", this.registeredUser.guestUser.firstName, date, "/");
+                                this.cookieService.set("apellidos", this.registeredUser.guestUser.lastName, date, "/");
+                                this.cookieService.set("lastloginstatus", "success", date, "/");
+                                this.router.navigate(['/loginsuccess']);
+                              }
+                              else if(auth.status === 'FAIL')
+                              {
+                                this.spinner.hide();
+                                var date = new Date();
+                                date.setTime(date.getTime()+(10*60*1000));
+                                this.cookieService.set("lastloginstatus", "unauthorized",date, "/");
+                                this.loginError = true;
+                                this.errorMessage = "No se pudo completar el login";
+                                this.snackBar.open("No se pudo completar el login, intentelo de nuevo", 'OK', {duration: 3000, horizontalPosition: 'center', verticalPosition: 'bottom'});
+                              }
+                          },
+                          (error)=> {
+                            console.error(error);
+                            this.spinner.hide();
+                            var date = new Date();
+                            date.setTime(date.getTime()+(10*60*1000));
+                            this.cookieService.set("lastloginstatus", "unauthorized",date, "/");
+                            this.loginError = true;
+                            this.errorMessage = "No se pudo completar el login";
+                            this.snackBar.open("No se pudo completar el login, intentelo de nuevo", 'OK', {duration: 3000, horizontalPosition: 'center', verticalPosition: 'bottom'});
+                          });
+                        }
+                      },
+                      (error) => {
+                        this.spinner.hide();
+                        if(error.status)
+                        {
+                          console.log(error);
+                          var date = new Date();
+                          date.setTime(date.getTime()+(10*60*1000));
+                          this.cookieService.set("lastloginstatus", "unauthorized",date, "/");
+                          this.loginError = true;
+                          this.errorMessage = "No se pudo completar el registro";
+                          this.snackBar.open(error.statusText + " - No se pudo completar el registro", 'OK', {duration: 3000, horizontalPosition: 'center', verticalPosition: 'bottom'});
+                        }
+                      });
+                  }
+                },
+                (error) => {
+                  this.spinner.hide();
+                  if(error.status)
+                  {
+                    console.log(error);
+                    var date = new Date();
+                    date.setTime(date.getTime()+(10*60*1000));
+                    this.cookieService.set("lastloginstatus", "unauthorized",date, "/");
+                    this.loginError = true;
+                    this.errorMessage = "No se pudo completar el registro";
+                    this.snackBar.open(error.statusText + " - No se pudo completar el registro", 'OK', {duration: 3000, horizontalPosition: 'center', verticalPosition: 'bottom'});
+                  }
+                })
+              }
+            },
+            (error) =>  {
+              this.spinner.hide();
+              if(error.status)
+              {
+                console.log(error);
+                var date = new Date();
+                date.setTime(date.getTime()+(10*60*1000));
+                this.cookieService.set("lastloginstatus", "unauthorized",date, "/");
+                this.loginError = true;
+                this.errorMessage = "No se pudo completar el registro";
+                this.snackBar.open(error.statusText + " - No se pudo completar el registro", 'OK', {duration: 3000, horizontalPosition: 'center', verticalPosition: 'bottom'});
+              }
             })
-          }
-        },
-        (error) =>  {
-          this.spinner.hide();
-          if(error.status)
-          {
-            console.log(error);
-            var date = new Date();
-            date.setTime(date.getTime()+(10*60*1000));
-            this.cookieService.set("lastloginstatus", "unauthorized",date, "/");
-            this.loginError = true;
-            this.errorMessage = "No se pudo completar el registro";
-            this.snackBar.open(error.statusText + " - No se pudo completar el registro", 'OK', {duration: 3000, horizontalPosition: 'center', verticalPosition: 'bottom'});
-          }
-        })
+        }
+      },
+      (error) => {
+
+      });
 
     }
     else
