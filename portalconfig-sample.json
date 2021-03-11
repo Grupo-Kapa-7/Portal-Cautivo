@@ -26,7 +26,19 @@
         "radiusPort" : 1812,
         "accountingPort" : 1813,
         "authorizationPort": 3799,
-        "customDictionaries" : []
+        "customDictionaries" : [],
+        "radiusProxyPool" : [
+            {
+                "name" : "Windows NPS Server",
+                "ip" : "10.1.1.5",
+                "secret" : "s3cr3t"
+            },
+            {
+                "name" : "FreeRADIUS",
+                "ip" : "10.1.1.6",
+                "secret" : "s3cr3t"
+            }
+        ]
     },
     "databaseOptions" : {
         "name": "mysql",

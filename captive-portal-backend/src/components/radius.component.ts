@@ -150,91 +150,131 @@ export class RadiusComponent implements Component, LifeCycleObserver{
           //Look in proxies
           else
           {
-            var radiusServer = '192.168.21.246';
             logger.log('info', 'Proxying RADIUS packet to configured RADIUS Servers');
-
-            var newPacket: any;
-            if(!chap && !mschap)
+            var allServersFinished = false;
+            portalConfig.radiusServerOptions.radiusProxyPool.forEach((server, key, arr) => 
             {
-              newPacket = {
-                code: "Access-Request",
-                secret: portalConfig.radiusServerOptions.secret,
-                identifier:  Math.floor(Math.random() * (255-1)) + 1,
-                attributes: [
-                  ['NAS-IP-Address', ip.address()],
-                  ['User-Name', username],
-                  ['User-Password', password]
-                ]
+              var isLast = false;
+              if(Object.is(arr.length - 1, key))
+              {
+                isLast = true;
               }
-            }
-            else if(chap)
-            {
-              newPacket = {
-                code: "Access-Request",
-                secret: portalConfig.radiusServerOptions.secret,
-                identifier:  Math.floor(Math.random() * (255-1)) + 1,
-                attributes: [
-                  ['NAS-IP-Address', ip.address()],
-                  ['User-Name', username],
-                  ['CHAP-Password', packet.attributes['CHAP-Password']],
-                  ['CHAP-Challenge', packet.authenticator]
-                ]
-              }
-            }
-
-            var client = dgram.createSocket("udp4");
-
-            client.bind(0);
-            
-            var response_count = 0;
-
-            var encoded = radius.encode(newPacket);
-
-            var sent_packets = [{
-              raw_packet: encoded,
-              secret: newPacket.secret
-            }];
-
-            client.on('message', function(msg, rinfo) {
-              var response = radius.decode({packet: msg, secret: portalConfig.radiusServerOptions.secret});
-              var request = sent_packets[0];
-              // although it's a slight hassle to keep track of packets, it's a good idea to verify
-              // responses to make sure you are talking to a server with the same shared secret
-              var valid_response = radius.verify_response({
-                response: msg,
-                request: request.raw_packet,
-                secret: request.secret
-              });
-              if (valid_response) {
-                if(response.code === 'Access-Accept')
-                {
-                  logger.log('info', 'Got valid response ' + response.code + ' for packet id ' + response.identifier + ' for user ' + username + ' from RADIUS Server ' + radiusServer);
-                  logger.log('info', `RADIUS: User ${username} authenticated successfully`);
-                  client.close();
-                  authenticated = true;
-                  var keys = Object.keys(response.attributes);
-                  var attributesArray : any[] = [];
-                  accept(response.raw_attributes, {});
+              var newPacket: any;
+              if(!chap && !mschap)
+              {
+                logger.log('info', 'Proxying RADIUS packet to ' + server.ip);
+                newPacket = {
+                  code: "Access-Request",
+                  secret: server.secret,
+                  identifier:  Math.floor(Math.random() * (255-1)) + 1,
+                  attributes: [
+                    ['NAS-IP-Address', ip.address()],
+                    ['User-Name', username],
+                    ['User-Password', password]
+                  ]
                 }
-                else if(response.code === 'Access-Reject')
-                {
+              }
+              else if(chap)
+              {
+                newPacket = {
+                  code: "Access-Request",
+                  secret: server.secret,
+                  identifier:  Math.floor(Math.random() * (255-1)) + 1,
+                  attributes: [
+                    ['NAS-IP-Address', ip.address()],
+                    ['User-Name', username],
+                    ['CHAP-Password', packet.attributes['CHAP-Password']],
+                    ['CHAP-Challenge', packet.authenticator]
+                  ]
+                }
+              }
+
+              var client = dgram.createSocket("udp4");
+
+              client.bind(0);
+              
+              var response_count = 0;
+
+              var encoded = radius.encode(newPacket);
+
+              var sent_packets = [{
+                raw_packet: encoded,
+                secret: newPacket.secret
+              }];
+
+              client.on('message', function(msg, rinfo) {
+                var response = radius.decode({packet: msg, secret: server.secret});
+                var request = sent_packets[0];
+                // although it's a slight hassle to keep track of packets, it's a good idea to verify
+                // responses to make sure you are talking to a server with the same shared secret
+                var valid_response = radius.verify_response({
+                  response: msg,
+                  request: request.raw_packet,
+                  secret: request.secret
+                });
+                if (valid_response) {
+                  if(response.code === 'Access-Accept')
+                  {
+                    logger.log('info', 'Got valid response ' + response.code + ' for packet id ' + response.identifier + ' for user ' + username + ' from RADIUS Server ' + server.ip);
+                    logger.log('info', `RADIUS: User ${username} authenticated successfully`);
+                    client.close();
+                    authenticated = true;
+                    if(isLast)
+                      allServersFinished = true;
+                    accept(response.raw_attributes, {});
+                  }
+                  else if(response.code === 'Access-Reject')
+                  {
+                    logger.log('error', `RADIUS: User ${username} with Password ${password} failed to authenticate`);
+                    client.close();
+                    if(isLast)
+                    {
+                      allServersFinished = true;
+                      reject([], {});
+                    }
+                  }
+                  else if(response.code === 'Access-Challenge')
+                  {
+                    logger.log('error', `RADIUS: User ${username} is requested with a RADIUS Challenge. Not yet implemented`);
+                    logger.log('info',response.attributes);
+                    client.close();
+                    if(isLast)
+                    {
+                      allServersFinished = true;
+                      reject([], {});
+                    }
+                  }
+                  else
+                  {
+                    logger.log('error', `RADIUS: User ${username} with Password ${password} failed to authenticate`);
+                    client.close();
+                    if(isLast)
+                    {
+                      allServersFinished = true;
+                      reject([], {});
+                    }
+                  }
+                } else {
+                  console.log('WARNING: Got invalid response ' + response.code + ' for packet id ' + response.identifier + ' for server ' + server.ip);
+                  // don't take action since server cannot be trusted (but maybe alert user that shared secret may be incorrect)
+                }
+              
+                if (++response_count == 3) {
+                  client.close();
                   logger.log('error', `RADIUS: User ${username} with Password ${password} failed to authenticate`);
-                  client.close();
-                  reject([], {});
+                  if(isLast)
+                  {
+                    allServersFinished = true;
+                    reject([], {})
+                  }
                 }
-              } else {
-                console.log('WARNING: Got invalid response ' + response.code + ' for packet id ' + response.identifier);
-                // don't take action since server cannot be trusted (but maybe alert user that shared secret may be incorrect)
-              }
-            
-              if (++response_count == 3) {
-                client.close();
-                logger.log('error', `RADIUS: User ${username} with Password ${password} failed to authenticate`);
-                reject([], {})
-              }
+              });
+
+              client.send(encoded, 0, encoded.length, 1812, server.ip);
             });
 
-            client.send(encoded, 0, encoded.length, 1812, radiusServer);
+            if(allServersFinished)
+              logger.log('info', 'All RADIUS packets sent. Awaiting reply');
 
           }
         }
@@ -250,18 +290,22 @@ export class RadiusComponent implements Component, LifeCycleObserver{
       }
     }).on('Accounting-Request', function(packet:any, rinfo:any, respond:any) 
     {
+      logger.log('info', packet);
       // catch all accounting-requests
-      respond([], {}, console.log)
+      respond([], {})
     }).on('Accounting-Request-Start', function(packet:any, rinfo:any, respond:any) 
     {
+      logger.log('info', packet);
       // or just catch specific accounting-request status types...
-      respond([], {}, console.log)
+      respond([], {})
     }).on('Accounting-Request-Interim-Update', function(packet:any, rinfo:any, respond:any) 
     {
-      respond([], {}, console.log)
+      logger.log('info', packet);
+      respond([], {})
     }).on('Accounting-Request-Stop', function(packet:any, rinfo:any, respond:any) 
     {
-      respond([], {}, console.log)
+      logger.log('info', packet);
+      respond([], {})
     })
 
   }
