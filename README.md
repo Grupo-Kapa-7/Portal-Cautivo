@@ -1,14 +1,15 @@
 # Portal Cautivo
-Portal cautivo funcional con dispositivos Fortinet tanto para acceso de invitados (guest) como para autenticación LDAP en FortiOS 6.4.4+
+Portal cautivo funcional con dispositivos Fortinet tanto para acceso de invitados (guest) como para autenticación LDAP en FortiOS 6.4.4+ mediante su REST API.
 
 ## Uso
-
+El portal cautivo se divide en 2 modulos
 ### Backend
-El portal cautivo se divide en 2 modulos, un backend escrito en [Loopback 4](https://loopback.io/) que hace lo siguiente:
-* Registra usuarios tipo invitados/guest y mac address de los dispositivos para ser usados con una autenticación RADIUS por parte del controlador WiFi (el caso de Fortinet con portales cautivos externos)
-* RADIUS server integrado
+El backend esta escrito en Typescript utilizando [Loopback 4](https://loopback.io/) que hace lo siguiente:
+* Registra y autenticacioón de usuarios tipo invitado/guest y mac address de los dispositivos para ser usados con una autenticación RADIUS por parte del controlador WiFi (el caso de Fortinet con portales cautivos externos)
 * Autenticación LDAP para soportar las funcionalidades de FortiOS 6.4.4+ con su api en el endpoint '/api/v2/monitor/user/firewall/auth'
-  - Verifica que el usuario exista en un directorio activo y comprueba sus credenciales antes de hacer login con el/los FortiGate(s) configurados
+  - Verifica que el usuario exista en un directorio activo y comprueba sus credenciales antes de hacer login con el/los FortiGate(s) configurados 
+* RADIUS Server integrado con soporte de autenticación PAP y CHAP (MS-CHAPv2 pendiente)
+* RADIUS Proxy para hacer forwarding de la autenticacion a otro RADIUS Server 
 * Logging de eventos via consola de programa, a archivos con log rotate y Syslog
 * Configuración de X número de portales cautivos con diferentes saludos, logos y soporta dos tipos de autenticación por portal cautivo : 'ldap' o 'guest'
 * Configuración de terminos y condiciones de uso por portal cautivo
