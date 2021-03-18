@@ -71,6 +71,7 @@
     "got": "^11.8.2",
     "ip": "^1.1.5",
     "ldap-authentication": "^2.2.6",
+    "ldap-authentication-beta": "shaozi/ldap-authentication#master",
     "loopback-connector-mysql": "^5.4.4",
     "openapi-to-graphql": "^2.2.6",
     "radclient": "^1.0.0",

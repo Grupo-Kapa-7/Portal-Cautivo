@@ -128,50 +128,25 @@ export class CaptivePortalComponent implements OnInit {
             )).subscribe((auth) => {
                 if(auth.status === 'AUTHENTICATED')
                 {
-                  this.spinner.hide();
                   console.log(auth);
-                  var date = new Date();
-                  date.setTime(date.getTime()+(10*60*1000));
-                  this.cookieService.set('username', this.registeredUser.guestUser.email, date, "/");
-                  this.cookieService.set("nombres", this.registeredUser.guestUser.firstName, date, "/");
-                  this.cookieService.set("apellidos", this.registeredUser.guestUser.lastName, date, "/");
-                  this.cookieService.set("lastloginstatus", "success", date, "/");
-                  this.router.navigate(['/loginsuccess']);
+                  this.loginSuccess(this.registeredUser.guestUser.emai, this.registeredUser.guestUser.firstName, this.registeredUser.guestUser.lastName);
                 }
                 else if(auth.status === 'FAIL')
                 {
-                  this.spinner.hide();
-                  var date = new Date();
-                  date.setTime(date.getTime()+(10*60*1000));
-                  this.cookieService.set("lastloginstatus", "unauthorized",date, "/");
-                  this.loginError = true;
-                  this.errorMessage = "No se pudo completar el login";
-                  this.snackBar.open("No se pudo completar el login, intentelo de nuevo", 'OK', {duration: 3000, horizontalPosition: 'center', verticalPosition: 'bottom'});
+                  this.loginFailed("No se pudo completar el login");
                 }
             },
             (error)=> {
               console.error(error);
-              this.spinner.hide();
-              var date = new Date();
-              date.setTime(date.getTime()+(10*60*1000));
-              this.cookieService.set("lastloginstatus", "unauthorized",date, "/");
-              this.loginError = true;
-              this.errorMessage = "No se pudo completar el login";
-              this.snackBar.open("No se pudo completar el login, intentelo de nuevo", 'OK', {duration: 3000, horizontalPosition: 'center', verticalPosition: 'bottom'});
+              this.loginFailed("No se pudo completar el login");
             });
           }
         },
         (error) => {
           console.log(error);
-          this.spinner.hide();
-          this.loginError = true;
           if(error.message)
           {
-            this.errorMessage = error.message;
-            var date = new Date();
-            date.setTime(date.getTime()+(10*60*1000));
-            this.cookieService.set("lastloginstatus", "unauthorized",date, "/");
-            this.snackBar.open("No se pudo completar el login, intente de nuevo en unos momentos.", 'OK', {duration: 3000, horizontalPosition: 'center', verticalPosition: 'bottom'});
+            this.loginFailed("No se pudo completar el login, intente de nuevo en unos momentos");
           }
         });
     }
@@ -182,6 +157,29 @@ export class CaptivePortalComponent implements OnInit {
     }
   }
 
+  loginSuccess(username: string, names: string, lastNames: string)
+  {
+    this.spinner.hide();
+    var date = new Date();
+    date.setTime(date.getTime()+(10*60*1000));
+    this.cookieService.set('username', username, date, "/");
+    this.cookieService.set("nombres", names, date, "/");
+    this.cookieService.set("apellidos", lastNames, date, "/");
+    this.cookieService.set("lastloginstatus", "success", date, "/");
+    this.router.navigate(['/loginsuccess']);
+  }
+
+  loginFailed(errorMessage: string)
+  {
+    this.spinner.hide();
+    var date = new Date();
+    date.setTime(date.getTime()+(10*60*1000));
+    this.cookieService.set("lastloginstatus", "unauthorized", date, "/");
+    this.loginError = true;
+    this.errorMessage = errorMessage;
+    this.snackBar.open(errorMessage, 'OK', {duration: 3000, horizontalPosition: 'center', verticalPosition: 'bottom'});
+  }
+
   handleError(error: HttpErrorResponse)
   {
     console.error(error);
@@ -190,7 +188,7 @@ export class CaptivePortalComponent implements OnInit {
     this.cookieService.set("lastloginstatus", "unauthorized",date, "/");
     this.loginError = true;
     this.errorMessage = "No se pudo completar el registro";
-    this.snackBar.open(error.statusText + " - No se pudo completar el registro", 'OK', {duration: 3000, horizontalPosition: 'center', verticalPosition: 'bottom'});
+    this.snackBar.open("No se pudo completar el registro", 'OK', {duration: 3000, horizontalPosition: 'center', verticalPosition: 'bottom'});
     return throwError('Intentelo mas tarde');
   }
 
@@ -246,36 +244,16 @@ export class CaptivePortalComponent implements OnInit {
                       )).subscribe((auth) => {
                           if(auth.status === 'AUTHENTICATED')
                           {
-                            this.spinner.hide();
-                            console.log(auth);
-                            var date = new Date();
-                            date.setTime(date.getTime()+(10*60*1000));
-                            this.cookieService.set('username', this.registeredUser.guestUser.email, date, "/");
-                            this.cookieService.set("nombres", this.registeredUser.guestUser.firstName, date, "/");
-                            this.cookieService.set("apellidos", this.registeredUser.guestUser.lastName, date, "/");
-                            this.cookieService.set("lastloginstatus", "success", date, "/");
-                            this.router.navigate(['/loginsuccess']);
+                            this.loginSuccess(this.registeredUser.guestUser.email, this.registeredUser.guestUser.firstName, this.registeredUser.guestUser.lastName);
                           }
                           else if(auth.status === 'FAIL')
                           {
-                            this.spinner.hide();
-                            var date = new Date();
-                            date.setTime(date.getTime()+(10*60*1000));
-                            this.cookieService.set("lastloginstatus", "unauthorized",date, "/");
-                            this.loginError = true;
-                            this.errorMessage = "No se pudo completar el login";
-                            this.snackBar.open("No se pudo completar el login, intentelo de nuevo", 'OK', {duration: 3000, horizontalPosition: 'center', verticalPosition: 'bottom'});
+                            this.loginFailed("No se pudo completar el login");
                           }
                       },
                       (error)=> {
                         console.error(error);
-                        this.spinner.hide();
-                        var date = new Date();
-                        date.setTime(date.getTime()+(10*60*1000));
-                        this.cookieService.set("lastloginstatus", "unauthorized",date, "/");
-                        this.loginError = true;
-                        this.errorMessage = "No se pudo completar el login";
-                        this.snackBar.open("No se pudo completar el login, intentelo de nuevo", 'OK', {duration: 3000, horizontalPosition: 'center', verticalPosition: 'bottom'});
+                        this.loginFailed("No se pudo completar el login");
                       });
                     }
                   },
@@ -283,28 +261,15 @@ export class CaptivePortalComponent implements OnInit {
                     this.spinner.hide();
                     if(error.status)
                     {
-                      console.log(error);
-                      var date = new Date();
-                      date.setTime(date.getTime()+(10*60*1000));
-                      this.cookieService.set("lastloginstatus", "unauthorized",date, "/");
-                      this.loginError = true;
-                      this.errorMessage = "No se pudo completar el registro";
-                      this.snackBar.open(error.statusText + " - No se pudo completar el registro", 'OK', {duration: 3000, horizontalPosition: 'center', verticalPosition: 'bottom'});
+                      this.loginFailed("No se pudo completar el registro");
                     }
                   });
               }
             },
             (error) => {
-              this.spinner.hide();
               if(error.status)
               {
-                console.log(error);
-                var date = new Date();
-                date.setTime(date.getTime()+(10*60*1000));
-                this.cookieService.set("lastloginstatus", "unauthorized",date, "/");
-                this.loginError = true;
-                this.errorMessage = "No se pudo completar el registro";
-                this.snackBar.open(error.statusText + " - No se pudo completar el registro", 'OK', {duration: 3000, horizontalPosition: 'center', verticalPosition: 'bottom'});
+                this.loginFailed("No se pudo completar el registro");
               }
             });
           }
@@ -353,80 +318,39 @@ export class CaptivePortalComponent implements OnInit {
                           )).subscribe((auth) => {
                               if(auth.status === 'AUTHENTICATED')
                               {
-                                this.spinner.hide();
-                                console.log(auth);
-                                var date = new Date();
-                                date.setTime(date.getTime()+(10*60*1000));
-                                this.cookieService.set('username', this.registeredUser.guestUser.email, date, "/");
-                                this.cookieService.set("nombres", this.registeredUser.guestUser.firstName, date, "/");
-                                this.cookieService.set("apellidos", this.registeredUser.guestUser.lastName, date, "/");
-                                this.cookieService.set("lastloginstatus", "success", date, "/");
-                                this.router.navigate(['/loginsuccess']);
+                                this.loginSuccess(this.registeredUser.guestUser.email, this.registeredUser.guestUser.firstName, this.registeredUser.guestUser.lastName);
                               }
                               else if(auth.status === 'FAIL')
                               {
-                                this.spinner.hide();
-                                var date = new Date();
-                                date.setTime(date.getTime()+(10*60*1000));
-                                this.cookieService.set("lastloginstatus", "unauthorized",date, "/");
-                                this.loginError = true;
-                                this.errorMessage = "No se pudo completar el login";
-                                this.snackBar.open("No se pudo completar el login, intentelo de nuevo", 'OK', {duration: 3000, horizontalPosition: 'center', verticalPosition: 'bottom'});
+                                this.loginFailed("No se pudo completar el login");
                               }
                           },
                           (error)=> {
                             console.error(error);
-                            this.spinner.hide();
-                            var date = new Date();
-                            date.setTime(date.getTime()+(10*60*1000));
-                            this.cookieService.set("lastloginstatus", "unauthorized",date, "/");
-                            this.loginError = true;
-                            this.errorMessage = "No se pudo completar el login";
-                            this.snackBar.open("No se pudo completar el login, intentelo de nuevo", 'OK', {duration: 3000, horizontalPosition: 'center', verticalPosition: 'bottom'});
+                            this.loginFailed("No se pudo completar el login");
                           });
                         }
                       },
                       (error) => {
-                        this.spinner.hide();
                         if(error.status)
                         {
-                          console.log(error);
-                          var date = new Date();
-                          date.setTime(date.getTime()+(10*60*1000));
-                          this.cookieService.set("lastloginstatus", "unauthorized",date, "/");
-                          this.loginError = true;
-                          this.errorMessage = "No se pudo completar el registro";
-                          this.snackBar.open(error.statusText + " - No se pudo completar el registro", 'OK', {duration: 3000, horizontalPosition: 'center', verticalPosition: 'bottom'});
+                          this.loginFailed("No se pudo completar el registro");
                         }
                       });
                   }
                 },
                 (error) => {
-                  this.spinner.hide();
                   if(error.status)
                   {
-                    console.log(error);
-                    var date = new Date();
-                    date.setTime(date.getTime()+(10*60*1000));
-                    this.cookieService.set("lastloginstatus", "unauthorized",date, "/");
-                    this.loginError = true;
-                    this.errorMessage = "No se pudo completar el registro";
-                    this.snackBar.open(error.statusText + " - No se pudo completar el registro", 'OK', {duration: 3000, horizontalPosition: 'center', verticalPosition: 'bottom'});
+                    this.loginFailed("No se pudo completar el registro");
                   }
                 })
               }
             },
             (error) =>  {
-              this.spinner.hide();
               if(error.status)
               {
-                console.log(error);
-                var date = new Date();
-                date.setTime(date.getTime()+(10*60*1000));
-                this.cookieService.set("lastloginstatus", "unauthorized",date, "/");
-                this.loginError = true;
-                this.errorMessage = "No se pudo completar el registro";
-                this.snackBar.open(error.statusText + " - No se pudo completar el registro", 'OK', {duration: 3000, horizontalPosition: 'center', verticalPosition: 'bottom'});
+                this.loginFailed("No se pudo completar el registro");
               }
             })
         }
@@ -457,28 +381,19 @@ export class CaptivePortalComponent implements OnInit {
           if(data.extra)
           {
             console.log("Login Success for user " + this.loginForm.controls.usernameControl.value);
-            var date = new Date();
-            date.setTime(date.getTime()+(10*60*1000));
-            this.cookieService.set('username', data.extra.sAMAccountName, date, "/");
-            this.cookieService.set("nombres", data.extra.givenName, date, "/");
-            this.cookieService.set("apellidos", data.extra.sn, date, "/");
-            this.cookieService.set("lastloginstatus", "success", date, "/");
-            this.router.navigate(['/loginsuccess']);
+            this.loginSuccess(data.extra.sAMAccountName, data.extra.givenName, data.extra.sn);
           }
-          this.spinner.hide();
         }
       },
       (error) => {
         console.log(error);
-        this.spinner.hide();
         if(error.status == 401)
         {
-          var date = new Date();
-          date.setTime(date.getTime()+(10*60*1000));
-          this.cookieService.set("lastloginstatus", "unauthorized",date, "/");
-          this.loginError = true;
-          this.errorMessage = error.statusText + " - Credenciales erroneas";
-          this.snackBar.open(error.statusText + " - Credenciales erroneas", 'OK', {duration: 3000, horizontalPosition: 'center', verticalPosition: 'bottom'});
+          this.loginFailed("Credenciales erroneas");
+        }
+        else
+        {
+          this.loginFailed("No se pudo contactar con el servidor de autenticación");
         }
       });
     

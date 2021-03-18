@@ -20,6 +20,7 @@ dist/
 *.jar
 *.exe
 captive-portal-backend-linux
+captive-portal-backend-mac
 *zip
 portalconfig.json
 captive-portal-backend/portalconfig.json

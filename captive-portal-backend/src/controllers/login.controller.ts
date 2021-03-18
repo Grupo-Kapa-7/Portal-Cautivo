@@ -32,7 +32,7 @@ import { SyslogTransportOptions, Syslog } from 'winston-syslog';
 
 
 const fs = require('fs');
-const { authenticate } = require('ldap-authentication');
+const { authenticate } = require('ldap-authentication-beta');
 const got = require('got');
 
 class NotFound extends Error {
@@ -114,7 +114,14 @@ export class LoginController {
 
         tempOptions.username = login.username;
         tempOptions.userPassword = login.password;
-        user = await authenticate(tempOptions)
+        try
+        {
+          user = await authenticate(tempOptions);
+        }
+        catch(err)
+        {
+          this.logger.log('error', err);
+        }
         if(user)
         {
           this.logger.log('info',"Usuario : " + login.username + " autenticado exitosamente en LDAP ");

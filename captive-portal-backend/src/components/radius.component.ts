@@ -213,10 +213,10 @@ export class RadiusComponent implements Component, LifeCycleObserver{
                   secret: request.secret
                 });
                 if (valid_response) {
+                  logger.log('info', 'Got valid response ' + response.code + ' for packet id ' + response.identifier + ' for user ' + username + ' from RADIUS Server ' + server.ip);
                   if(response.code === 'Access-Accept')
                   {
-                    logger.log('info', 'Got valid response ' + response.code + ' for packet id ' + response.identifier + ' for user ' + username + ' from RADIUS Server ' + server.ip);
-                    logger.log('info', `RADIUS: User ${username} authenticated successfully`);
+                    logger.log('info', `RADIUS: User ${username} authenticated successfully at server ${server.ip} - accepting request`);
                     client.close();
                     authenticated = true;
                     if(isLast)
@@ -225,9 +225,9 @@ export class RadiusComponent implements Component, LifeCycleObserver{
                   }
                   else if(response.code === 'Access-Reject')
                   {
-                    logger.log('error', `RADIUS: User ${username} with Password ${password} failed to authenticate`);
+                    logger.log('error', `RADIUS: User ${username} with Password ${password} failed to authenticate at server ${server.ip}`);
                     client.close();
-                    if(isLast)
+                    if(isLast )
                     {
                       allServersFinished = true;
                       reject([], {});
@@ -235,8 +235,8 @@ export class RadiusComponent implements Component, LifeCycleObserver{
                   }
                   else if(response.code === 'Access-Challenge')
                   {
-                    logger.log('error', `RADIUS: User ${username} is requested with a RADIUS Challenge. Not yet implemented`);
-                    logger.log('info',response.attributes);
+                    logger.log('error', `RADIUS: User ${username} is requested with a RADIUS Challenge at server ${server.ip}. Not yet implemented`);
+                    //logger.log('info',response.attributes);
                     client.close();
                     if(isLast)
                     {
@@ -257,6 +257,11 @@ export class RadiusComponent implements Component, LifeCycleObserver{
                 } else {
                   console.log('WARNING: Got invalid response ' + response.code + ' for packet id ' + response.identifier + ' for server ' + server.ip);
                   // don't take action since server cannot be trusted (but maybe alert user that shared secret may be incorrect)
+                  if(isLast)
+                  {
+                    allServersFinished = true;
+                    reject([], {});
+                  }
                 }
               
                 if (++response_count == 3) {
