@@ -32,7 +32,7 @@ import { SyslogTransportOptions, Syslog } from 'winston-syslog';
 
 
 const fs = require('fs');
-const { authenticate } = require('ldap-authentication-beta');
+const { authenticate } = require('ldap-authentication');
 const got = require('got');
 
 class NotFound extends Error {
